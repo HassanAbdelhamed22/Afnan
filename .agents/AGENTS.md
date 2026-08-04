@@ -62,4 +62,19 @@ Always use the custom editorial typography classes defined in `globals.css`:
           userId: string;
         }
         ```
+*   **Mongoose Connection**: Always call `await connectMongoose()` (imported from `@/lib/mongoose`) inside repositories, services, or a shared model helper before executing any domain queries or database operations. Do not assume active connection.
+
+---
+
+## 6. Validation & Error Handling Rules
+*   **Egyptian Phone Normalization**: Always validate and normalize Egyptian mobile numbers using `normalizeEgyptianPhone()` (from `@/lib/phone`) to standard E.164 (`+20...`) format. Reject formatting mismatches.
+*   **Error Disclosure Restrictions**: Under no circumstances should database internals, stack traces, environment variables, cookie values, reset tokens, or raw provider errors reach client query outputs. Always sanitize exceptions using `errorToApiResponse()` or similar mapping.
+
+---
+
+## 7. HTTP & API Protocol Contracts
+*   **Server Actions**: Since Server Actions do not return HTTP status codes, they must always return the typed `ActionResult<T>` structure using `actionSuccess()` or `actionFailure()` (imported from `@/lib/results/action-result`).
+*   **Route Handlers**: Wrap all custom API Route Handlers (GET, POST, PUT, DELETE) with the `withApiHandler()` (from `@/lib/http/with-api-handler`) higher-order function, and use the `apiSuccess()` or `apiFailure()` (from `@/lib/http/api-response`) helpers to structure responses.
+*   **Better Auth Exceptions**: Do not wrap Better Auth's native `/api/auth/[...all]` endpoint routes with `withApiHandler` or the `apiSuccess`/`apiFailure` wrappers. Better Auth clients expect Better Auth's native response formats.
+
 
