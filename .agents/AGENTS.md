@@ -63,6 +63,8 @@ Always use the custom editorial typography classes defined in `globals.css`:
         }
         ```
 *   **Mongoose Connection**: Always call `await connectMongoose()` (imported from `@/lib/mongoose`) inside repositories, services, or a shared model helper before executing any domain queries or database operations. Do not assume active connection.
+*   **Public Register Protections**: Ensure all user schema fields that control access controls or status limits (e.g. `role` and `status`) are configured with `input: false` inside the Better Auth options. This prevents registration input payload attacks from granting admin access.
+*   **Client Session Restrictions**: The client-side `useSession()` hook is strictly for reactive UI elements (names, navbar indicators). Never use it as the final security authorization check for actions or data modifications—server-side checks must always be performed.
 
 ---
 
@@ -76,5 +78,7 @@ Always use the custom editorial typography classes defined in `globals.css`:
 *   **Server Actions**: Since Server Actions do not return HTTP status codes, they must always return the typed `ActionResult<T>` structure using `actionSuccess()` or `actionFailure()` (imported from `@/lib/results/action-result`).
 *   **Route Handlers**: Wrap all custom API Route Handlers (GET, POST, PUT, DELETE) with the `withApiHandler()` (from `@/lib/http/with-api-handler`) higher-order function, and use the `apiSuccess()` or `apiFailure()` (from `@/lib/http/api-response`) helpers to structure responses.
 *   **Better Auth Exceptions**: Do not wrap Better Auth's native `/api/auth/[...all]` endpoint routes with `withApiHandler` or the `apiSuccess`/`apiFailure` wrappers. Better Auth clients expect Better Auth's native response formats.
+*   **Local Redirect Validation**: Never redirect user sessions directly to arbitrary user input URLs. All user-input redirect URL parameters must pass through the `getSafeReturnTo()` validator to restrict redirects to relative paths (starting with `/`, but not `//`).
+
 
 
