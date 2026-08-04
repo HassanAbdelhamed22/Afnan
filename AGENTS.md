@@ -184,6 +184,10 @@ src/
 ├── emails/
 ├── styles/
 └── test/
+scripts/
+├── seed.ts
+├── create-admin.ts
+└── create-indexes.ts
 ```
 
 ### Folder rules
