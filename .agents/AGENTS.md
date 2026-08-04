@@ -65,6 +65,9 @@ Always use the custom editorial typography classes defined in `globals.css`:
 *   **Mongoose Connection**: Always call `await connectMongoose()` (imported from `@/lib/mongoose`) inside repositories, services, or a shared model helper before executing any domain queries or database operations. Do not assume active connection.
 *   **Public Register Protections**: Ensure all user schema fields that control access controls or status limits (e.g. `role` and `status`) are configured with `input: false` inside the Better Auth options. This prevents registration input payload attacks from granting admin access.
 *   **Client Session Restrictions**: The client-side `useSession()` hook is strictly for reactive UI elements (names, navbar indicators). Never use it as the final security authorization check for actions or data modifications—server-side checks must always be performed.
+*   **Optimistic Proxy Middleware**: Optimistic path protections are configured inside `src/proxy.ts` checking for basic cookie existence. Emphasize that this is optimistic; final and secure authorization must always occur on the server side using the DAL utilities.
+*   **Deduplicated Server Validation (DAL)**: All final server-side authorization validation must be fetched using `getCurrentSession()`, `requireUser()`, or `requireAdmin()` (from `@/modules/auth/dal`). Call these helpers inside Server Components, Server Actions, and Route Handlers instead of executing custom session fetches.
+
 
 ---
 
