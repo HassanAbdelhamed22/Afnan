@@ -3,6 +3,8 @@ import "server-only";
 
 import { z } from "zod";
 
+import { getZodFieldErrors } from "@/lib/utils";
+
 const envSchema = z.object({
   NODE_ENV: z
     .enum(["development", "test", "production"])
@@ -25,7 +27,7 @@ const parsed = envSchema.safeParse(process.env);
 if (!parsed.success) {
   console.error(
     "Invalid environment variables:",
-    parsed.error.flatten().fieldErrors,
+    getZodFieldErrors(parsed.error),
   );
 
   throw new Error("Invalid environment configuration");

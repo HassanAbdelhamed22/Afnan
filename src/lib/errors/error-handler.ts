@@ -4,6 +4,7 @@ import { ZodError } from "zod";
 
 import { AppError } from "./app-error";
 import { apiFailure } from "@/lib/http/api-response";
+import { getZodFieldErrors } from "@/lib/utils";
 
 export function errorToApiResponse(error: unknown) {
   const requestId = randomUUID();
@@ -13,7 +14,7 @@ export function errorToApiResponse(error: unknown) {
       {
         code: "VALIDATION_ERROR",
         message: "The submitted data is invalid",
-        details: error.flatten().fieldErrors,
+        details: getZodFieldErrors(error),
         requestId,
       },
       422,
