@@ -42,3 +42,24 @@ Always use the custom editorial typography classes defined in `globals.css`:
 
 ### Maker's Note Component
 *   **Structure**: Container styled with `bg-surface border border-outline-variant py-8 px-6 text-on-surface`. Used on product detail pages for storytelling.
+
+---
+
+## 5. Database & Authentication Design Rules
+*   **Better Auth User References**: Better Auth uses string user IDs by default. Therefore, your business collections (like carts, orders, custom requests) must use a **String** for authentication and user references:
+    ```typescript
+    userId: {
+      type: String,
+      required: true,
+      index: true,
+    }
+    ```
+*   **Mongoose Schema Constraints**: Do not define Better Auth user references as Mongoose `Schema.Types.ObjectId` unless you deliberately change Better Auth's ID-generation strategy. Better Auth's core user and session schemas use string IDs.
+    *   **TypeScript representation**:
+        ```typescript
+        interface Order {
+          _id: Types.ObjectId;
+          userId: string;
+        }
+        ```
+
