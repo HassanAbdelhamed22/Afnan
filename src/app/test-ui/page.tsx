@@ -14,7 +14,7 @@ import { Dropdown, DropdownItem } from "@/components/ui/dropdown";
 import { Pagination } from "@/components/ui/pagination";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import { toast, ToastProvider } from "@/components/ui/toast";
+import { toast } from "@/components/ui/toast";
 import { FormField } from "@/components/ui/form-field";
 import { ImagePlaceholder } from "@/components/ui/image-placeholder";
 
@@ -25,7 +25,7 @@ export default function TestUIPage() {
 
   return (
     <div className="min-h-screen bg-background text-on-background p-12 flex flex-col gap-16 max-w-6xl mx-auto">
-      <ToastProvider />
+
 
       <div>
         <h1 className="display-lg mb-2">Afnan UI System</h1>

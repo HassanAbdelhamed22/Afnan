@@ -33,39 +33,37 @@
   --on-error-container: #93000a;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Modern Atelier Dark Theme Colors */
-    --background: #0a0a0a;
-    --on-background: #f1f1f1;
-    --surface: #141414;
-    --on-surface: #f1f1f1;
-    --on-surface-variant: #a3a3a3;
+.dark {
+  /* Modern Atelier Dark Theme Colors */
+  --background: #0a0a0a;
+  --on-background: #f1f1f1;
+  --surface: #141414;
+  --on-surface: #f1f1f1;
+  --on-surface-variant: #a3a3a3;
 
-    --surface-container-lowest: #0d0d0d;
-    --surface-container-low: #1a1a1a;
-    --surface-container: #222222;
-    --surface-container-high: #2d2d2d;
-    --surface-container-highest: #333333;
+  --surface-container-lowest: #0d0d0d;
+  --surface-container-low: #1a1a1a;
+  --surface-container: #222222;
+  --surface-container-high: #2d2d2d;
+  --surface-container-highest: #333333;
 
-    --primary: #ffffff;
-    --on-primary: #000000;
-    --primary-container: #f1f1f1;
-    --on-primary-container: #a3a3a3;
+  --primary: #ffffff;
+  --on-primary: #000000;
+  --primary-container: #f1f1f1;
+  --on-primary-container: #a3a3a3;
 
-    --secondary: #a3a3a3;
-    --on-secondary: #0a0a0a;
-    --secondary-container: #2d2d2d;
-    --on-secondary-container: #c6c6c6;
+  --secondary: #a3a3a3;
+  --on-secondary: #0a0a0a;
+  --secondary-container: #2d2d2d;
+  --on-secondary-container: #c6c6c6;
 
-    --outline: #525252;
-    --outline-variant: #262626;
+  --outline: #525252;
+  --outline-variant: #262626;
 
-    --error: #ffb4ab;
-    --on-error: #690005;
-    --error-container: #93000a;
-    --on-error-container: #ffdad6;
-  }
+  --error: #ffb4ab;
+  --on-error: #690005;
+  --error-container: #93000a;
+  --on-error-container: #ffdad6;
 }
 
 @theme {
