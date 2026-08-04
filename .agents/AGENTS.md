@@ -82,6 +82,10 @@ Always use the custom editorial typography classes defined in `globals.css`:
 *   **Route Handlers**: Wrap all custom API Route Handlers (GET, POST, PUT, DELETE) with the `withApiHandler()` (from `@/lib/http/with-api-handler`) higher-order function, and use the `apiSuccess()` or `apiFailure()` (from `@/lib/http/api-response`) helpers to structure responses.
 *   **Better Auth Exceptions**: Do not wrap Better Auth's native `/api/auth/[...all]` endpoint routes with `withApiHandler` or the `apiSuccess`/`apiFailure` wrappers. Better Auth clients expect Better Auth's native response formats.
 *   **Local Redirect Validation**: Never redirect user sessions directly to arbitrary user input URLs. All user-input redirect URL parameters must pass through the `getSafeReturnTo()` validator to restrict redirects to relative paths (starting with `/`, but not `//`).
+*   **Layout Protection & Boundary Catching**: Admin and customer layout files must wrap their content inside a `try/catch` block calling `requireUser()` or `requireAdmin()`. Catch `UnauthenticatedError` to redirect users (e.g. `/login?returnTo=...`) and catch `ForbiddenError` to trigger `notFound()`.
+*   **Inline Action Guards**: Every Server Action is a public entry point and must call `requireUser()` or `requireAdmin()` at the very beginning of the function body before parsing inputs or running logic.
+*   **Resource Ownership Query Filters**: Never fetch a document first and check ownership in application code later. Always enforce database-level ownership constraints directly inside the query filter parameters (e.g., `{ _id: recordId, userId: session.user.id }`).
+
 
 
 
