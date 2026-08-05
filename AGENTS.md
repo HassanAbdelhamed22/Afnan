@@ -294,6 +294,10 @@ Rules:
 - Never expose password hashes, session tokens, reset tokens, or provider secrets.
 - Use generic authentication errors to reduce account enumeration.
 - Create the first admin through a protected script or controlled environment process.
+- **Admin Guarding**: All admin directories (`/admin/*`) must be wrapped in `admin/layout.tsx` enforcing `requireAdmin()`. Unauthenticated triggers are redirected to `/login?returnTo=...` and forbidden triggers are redirected to `/unauthorized`.
+- **Account Guarding**: All account directories (`/account/*`) must be wrapped in `account/layout.tsx` enforcing `requireUser()`.
+- **Reverse Auth Middleware**: The proxy middleware must intercept active sessions requesting public auth pages (`/login`, `/register`, `/forgot-password`, `/reset-password`) and redirect them to `/`.
+- **Layout Segregation**: Storefront navigation elements (e.g., `Header`, `Footer`) must return `null` on `/admin` path queries to prevent layout bleeding.
 
 ---
 
