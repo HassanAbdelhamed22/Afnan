@@ -8,6 +8,8 @@ type FieldErrors = Record<string, string[] | undefined>;
 interface UseFormValidationOptions<T extends Record<string, unknown>> {
   /** The Zod schema (or individual field schemas map) to validate against */
   schema: ZodType<T>;
+  /** Optional form values state to enable cross-field validation */
+  values?: T;
 }
 
 interface UseFormValidationReturn {
@@ -35,18 +37,21 @@ interface UseFormValidationReturn {
  */
 export function useFormValidation<T extends Record<string, unknown>>({
   schema,
+  values,
 }: UseFormValidationOptions<T>): UseFormValidationReturn {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [touched, setTouched] = useState<Set<string>>(() => new Set());
 
   const validateField = useCallback(
-    (fieldName: string, value: string, allValues?: Record<string, string>) => {
+    (fieldName: string, value: string) => {
       /*
        * Validate the whole schema with partial data, then extract only
        * the error for the targeted field. This approach ensures cross-field
        * validations (like confirmPassword matching password) work correctly.
        */
-      const data = allValues ?? { [fieldName]: value };
+      const data = values
+        ? { ...values, [fieldName]: value }
+        : { [fieldName]: value };
       const result = schema.safeParse(data);
 
       if (result.success) {
@@ -76,7 +81,7 @@ export function useFormValidation<T extends Record<string, unknown>>({
         });
       }
     },
-    [schema],
+    [schema, values],
   );
 
   const handleBlur = useCallback(

@@ -16,7 +16,19 @@ export function proxy(
       cookiePrefix: "afnan",
     });
 
-  if (!sessionCookie) {
+  const pathname = request.nextUrl.pathname;
+  const isAuthRoute =
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname === "/forgot-password" ||
+    pathname === "/reset-password" ||
+    pathname.startsWith("/reset-password");
+
+  if (sessionCookie && isAuthRoute) {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  if (!sessionCookie && !isAuthRoute) {
     const loginUrl =
       new URL(
         "/login",
@@ -43,5 +55,9 @@ export const config = {
     "/checkout",
     "/custom-request",
     "/admin/:path*",
+    "/login",
+    "/register",
+    "/forgot-password",
+    "/reset-password",
   ],
 };

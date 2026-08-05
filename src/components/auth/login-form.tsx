@@ -2,6 +2,7 @@
 
 import { useActionState, useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { loginAction } from "@/modules/auth/actions";
 import { loginSchema } from "@/modules/auth/schemas";
@@ -9,10 +10,11 @@ import type { ActionResult } from "@/lib/results/action-result";
 import { useFormValidation } from "@/lib/hooks/use-form-validation";
 import { FormField } from "@/components/ui/form-field";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
 
-const initialState: ActionResult<Record<string, never>> = {
+const initialState: ActionResult<{ redirectTo: string }> = {
   ok: true,
-  data: {},
+  data: { redirectTo: "" },
 };
 
 const fieldShell =
@@ -25,6 +27,7 @@ type LoginFormProps = {
 };
 
 export function LoginForm({ returnTo = "/" }: LoginFormProps) {
+  const router = useRouter();
   const [state, formAction, pending] = useActionState(
     loginAction,
     initialState,
@@ -32,25 +35,67 @@ export function LoginForm({ returnTo = "/" }: LoginFormProps) {
 
   const [showPassword, setShowPassword] = useState(false);
 
+  const [values, setValues] = useState({
+    email: "",
+    password: "",
+  });
+
   const {
     errors: clientErrors,
     handleBlur,
     handleChange,
     setServerErrors,
-  } = useFormValidation({ schema: loginSchema });
+    validateAll,
+  } = useFormValidation({ schema: loginSchema, values });
+
+  const updateValue = (field: keyof typeof values, value: string) => {
+    setValues((prev) => ({ ...prev, [field]: value }));
+    handleChange(field, value);
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const isValid = validateAll(values);
+    if (!isValid) {
+      e.preventDefault();
+      toast.show("Please correct the highlighted fields", "error");
+    }
+  };
 
   useEffect(() => {
-    if (!state.ok && state.error.fieldErrors) {
-      setServerErrors(state.error.fieldErrors);
+    if (!state.ok) {
+      toast.show(state.error.message || "Sign in failed", "error");
+      if (state.error.fieldErrors) {
+        setServerErrors(state.error.fieldErrors);
+      }
+    } else if (state.message) {
+      toast.show(state.message, "success");
+      const redirectUrl = state.data.redirectTo;
+      setTimeout(() => {
+        router.push(redirectUrl);
+        router.refresh();
+      }, 800);
     }
-  }, [state, setServerErrors]);
+  }, [state, setServerErrors, router]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const returnToParam = params.get("returnTo");
+    if (returnToParam && returnToParam !== "/") {
+      toast.show("Please sign in first to access that page.", "info");
+    }
+  }, []);
 
   const serverFieldErrors = !state.ok ? state.error.fieldErrors : undefined;
   const getError = (field: string) =>
     clientErrors[field]?.[0] ?? serverFieldErrors?.[field]?.[0];
 
   return (
-    <form action={formAction} className="flex flex-col gap-5" noValidate>
+    <form
+      action={formAction}
+      onSubmit={handleSubmit}
+      className="flex flex-col gap-5"
+      noValidate
+    >
       <input type="hidden" name="returnTo" value={returnTo} />
 
       {/* ── Email ── */}
@@ -79,8 +124,9 @@ export function LoginForm({ returnTo = "/" }: LoginFormProps) {
             aria-invalid={Boolean(getError("email"))}
             aria-describedby={getError("email") ? "login-email-error" : undefined}
             className={inputClass}
+            value={values.email}
             onBlur={(e) => handleBlur("email", e.target.value)}
-            onChange={(e) => handleChange("email", e.target.value)}
+            onChange={(e) => updateValue("email", e.target.value)}
           />
         </div>
       </FormField>
@@ -111,8 +157,9 @@ export function LoginForm({ returnTo = "/" }: LoginFormProps) {
             aria-invalid={Boolean(getError("password"))}
             aria-describedby={getError("password") ? "login-password-error" : undefined}
             className={`${inputClass} pr-9`}
+            value={values.password}
             onBlur={(e) => handleBlur("password", e.target.value)}
-            onChange={(e) => handleChange("password", e.target.value)}
+            onChange={(e) => updateValue("password", e.target.value)}
           />
           <button
             type="button"
@@ -174,7 +221,7 @@ export function LoginForm({ returnTo = "/" }: LoginFormProps) {
         type="submit"
         disabled={pending}
         aria-busy={pending}
-        className="mt-2 min-h-12 w-full py-3 font-sans text-xs font-semibold tracking-[0.12em] shadow-[0_10px_30px_rgba(0,0,0,0.08)] hover:-translate-y-px"
+        className="mt-2 min-h-12 w-full py-3 font-sans text-xs font-semibold tracking-[0.12em] hover:-translate-y-px"
       >
         {pending ? "Signing in…" : "Sign in"}
       </Button>

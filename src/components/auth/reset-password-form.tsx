@@ -2,13 +2,16 @@
 
 import { useActionState, useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
+import { cn } from "@/lib/utils";
 import { resetPasswordAction } from "@/modules/auth/actions";
 import { resetPasswordSchema } from "@/modules/auth/schemas";
 import type { ActionResult } from "@/lib/results/action-result";
 import { useFormValidation } from "@/lib/hooks/use-form-validation";
 import { FormField } from "@/components/ui/form-field";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
 
 const initialState: ActionResult<Record<string, never>> = {
   ok: true,
@@ -25,6 +28,7 @@ type ResetPasswordFormProps = {
 };
 
 export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
+  const router = useRouter();
   const [state, formAction, pending] = useActionState(
     resetPasswordAction,
     initialState,
@@ -33,25 +37,59 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const [values, setValues] = useState({
+    password: "",
+    confirmPassword: "",
+  });
+
+  const hasMinLength = values.password.length >= 8;
+  const hasNumber = /[0-9]/.test(values.password);
+  const hasSpecialChar = /[^a-zA-Z0-9]/.test(values.password);
+
   const {
     errors: clientErrors,
     handleBlur,
     handleChange,
     setServerErrors,
-  } = useFormValidation({ schema: resetPasswordSchema });
+    validateAll,
+  } = useFormValidation({ schema: resetPasswordSchema, values });
+
+  const updateValue = (field: keyof typeof values, value: string) => {
+    setValues((prev) => ({ ...prev, [field]: value }));
+    handleChange(field, value);
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const isValid = validateAll({ ...values, token });
+    if (!isValid) {
+      e.preventDefault();
+      toast.show("Please correct the highlighted fields", "error");
+    }
+  };
 
   useEffect(() => {
-    if (!state.ok && state.error.fieldErrors) {
-      setServerErrors(state.error.fieldErrors);
+    if (!state.ok) {
+      toast.show(state.error.message || "Reset failed", "error");
+      if (state.error.fieldErrors) {
+        setServerErrors(state.error.fieldErrors);
+      }
+    } else if (state.message) {
+      toast.show(state.message, "success");
+      router.push("/login");
     }
-  }, [state, setServerErrors]);
+  }, [state, setServerErrors, router]);
 
   const serverFieldErrors = !state.ok ? state.error.fieldErrors : undefined;
   const getError = (field: string) =>
     clientErrors[field]?.[0] ?? serverFieldErrors?.[field]?.[0];
 
   return (
-    <form action={formAction} className="flex flex-col gap-4" noValidate>
+    <form
+      action={formAction}
+      onSubmit={handleSubmit}
+      className="flex flex-col gap-4"
+      noValidate
+    >
       <input type="hidden" name="token" value={token} />
 
       {/* ── New Password ── */}
@@ -80,8 +118,9 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
             aria-invalid={Boolean(getError("password"))}
             aria-describedby={`reset-password-requirements${getError("password") ? " reset-password-error" : ""}`}
             className={`${inputClass} pr-9`}
+            value={values.password}
             onBlur={(e) => handleBlur("password", e.target.value)}
-            onChange={(e) => handleChange("password", e.target.value)}
+            onChange={(e) => updateValue("password", e.target.value)}
           />
           <button
             type="button"
@@ -124,17 +163,35 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
         </div>
 
         {/* Password requirements bullets */}
-        <div id="reset-password-requirements" className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 font-sans text-[11px] text-on-surface-variant/75">
-          <span className="flex items-center gap-1.5">
-            <span className="w-1 h-1 rounded-full bg-on-surface-variant/60" />
+        <div id="reset-password-requirements" className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 font-sans text-[11px] select-none">
+          <span className={cn(
+            "flex items-center gap-1.5 transition-colors duration-200",
+            hasMinLength ? "text-on-background font-semibold" : "text-on-surface-variant/50"
+          )}>
+            <span className={cn(
+              "w-1 h-1 transition-colors duration-200",
+              hasMinLength ? "bg-primary" : "bg-on-surface-variant/35"
+            )} />
             At least 8 characters
           </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-1 h-1 rounded-full bg-on-surface-variant/60" />
+          <span className={cn(
+            "flex items-center gap-1.5 transition-colors duration-200",
+            hasNumber ? "text-on-background font-semibold" : "text-on-surface-variant/50"
+          )}>
+            <span className={cn(
+              "w-1 h-1 transition-colors duration-200",
+              hasNumber ? "bg-primary" : "bg-on-surface-variant/35"
+            )} />
             One number
           </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-1 h-1 rounded-full bg-on-surface-variant/60" />
+          <span className={cn(
+            "flex items-center gap-1.5 transition-colors duration-200",
+            hasSpecialChar ? "text-on-background font-semibold" : "text-on-surface-variant/50"
+          )}>
+            <span className={cn(
+              "w-1 h-1 transition-colors duration-200",
+              hasSpecialChar ? "bg-primary" : "bg-on-surface-variant/35"
+            )} />
             One special character
           </span>
         </div>
@@ -166,8 +223,9 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
             aria-invalid={Boolean(getError("confirmPassword"))}
             aria-describedby={getError("confirmPassword") ? "reset-confirm-password-error" : undefined}
             className={`${inputClass} pr-9`}
+            value={values.confirmPassword}
             onBlur={(e) => handleBlur("confirmPassword", e.target.value)}
-            onChange={(e) => handleChange("confirmPassword", e.target.value)}
+            onChange={(e) => updateValue("confirmPassword", e.target.value)}
           />
           <button
             type="button"
@@ -226,7 +284,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
         type="submit"
         disabled={pending}
         aria-busy={pending}
-        className="mt-3 min-h-12 w-full py-3 font-sans text-xs font-semibold tracking-[0.12em] shadow-[0_10px_30px_rgba(0,0,0,0.08)] hover:-translate-y-px"
+        className="mt-3 min-h-12 w-full py-3 font-sans text-xs font-semibold tracking-[0.12em] hover:-translate-y-px"
       >
         {pending ? "Resetting password…" : "Reset password"}
       </Button>

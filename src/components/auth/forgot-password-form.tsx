@@ -9,6 +9,7 @@ import type { ActionResult } from "@/lib/results/action-result";
 import { useFormValidation } from "@/lib/hooks/use-form-validation";
 import { FormField } from "@/components/ui/form-field";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
 
 const initialState: ActionResult<Record<string, never>> = {
   ok: true,
@@ -32,8 +33,13 @@ export function ForgotPasswordForm() {
   } = useFormValidation({ schema: forgotPasswordSchema });
 
   useEffect(() => {
-    if (!state.ok && state.error.fieldErrors) {
-      setServerErrors(state.error.fieldErrors);
+    if (!state.ok) {
+      toast.show(state.error.message || "Failed to request reset", "error");
+      if (state.error.fieldErrors) {
+        setServerErrors(state.error.fieldErrors);
+      }
+    } else if (state.message) {
+      toast.show(state.message, "success");
     }
   }, [state, setServerErrors]);
 
@@ -90,7 +96,7 @@ export function ForgotPasswordForm() {
         type="submit"
         disabled={pending}
         aria-busy={pending}
-        className="mt-2 min-h-12 w-full py-3 font-sans text-xs font-semibold tracking-[0.12em] shadow-[0_10px_30px_rgba(0,0,0,0.08)] hover:-translate-y-px"
+        className="mt-2 min-h-12 w-full py-3 font-sans text-xs font-semibold tracking-[0.12em] hover:-translate-y-px"
       >
         {pending ? "Sending reset link…" : "Send reset link"}
       </Button>

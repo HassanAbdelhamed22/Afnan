@@ -2,7 +2,9 @@
 
 import { useActionState, useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
+import { cn } from "@/lib/utils";
 import { registerAction } from "@/modules/auth/actions";
 import { registerSchema } from "@/modules/auth/schemas";
 import type { ActionResult } from "@/lib/results/action-result";
@@ -10,6 +12,7 @@ import { useFormValidation } from "@/lib/hooks/use-form-validation";
 import { FormField } from "@/components/ui/form-field";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
 
 const initialState: ActionResult<Record<string, never>> = {
   ok: true,
@@ -24,6 +27,7 @@ const countryPrefixClass =
   "flex min-h-12 shrink-0 items-center border border-solid border-outline-variant bg-surface px-3.5 font-sans text-sm font-semibold text-on-background";
 
 export function RegisterForm() {
+  const router = useRouter();
   const [state, formAction, pending] = useActionState(
     registerAction,
     initialState,
@@ -33,19 +37,65 @@ export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const [values, setValues] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    whatsappPhone: "",
+    password: "",
+    confirmPassword: "",
+  });
+
+  const hasMinLength = values.password.length >= 8;
+  const hasNumber = /[0-9]/.test(values.password);
+  const hasSpecialChar = /[^a-zA-Z0-9]/.test(values.password);
+
   const {
     errors: clientErrors,
     handleBlur,
     handleChange,
     setServerErrors,
-  } = useFormValidation({ schema: registerSchema });
+    validateAll,
+  } = useFormValidation({
+    schema: registerSchema,
+    values: {
+      ...values,
+      sameAsWhatsApp: sameAsWhatsApp ? "true" : "false",
+    },
+  });
 
-  /* Merge server errors into client state when they arrive */
-  useEffect(() => {
-    if (!state.ok && state.error.fieldErrors) {
-      setServerErrors(state.error.fieldErrors);
+  const updateValue = (field: keyof typeof values, value: string) => {
+    setValues((prev) => ({ ...prev, [field]: value }));
+    handleChange(field, value);
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const payload = {
+      ...values,
+      sameAsWhatsApp: sameAsWhatsApp ? "true" : "false",
+    };
+
+    const isValid = validateAll(payload);
+    if (!isValid) {
+      e.preventDefault();
+      toast.show("Please correct the highlighted fields", "error");
     }
-  }, [state, setServerErrors]);
+  };
+
+  /* Trigger toast alerts on result and redirect to login if successful */
+  useEffect(() => {
+    if (!state.ok) {
+      toast.show(state.error.message || "Registration failed", "error");
+      if (state.error.fieldErrors) {
+        setServerErrors(state.error.fieldErrors);
+      }
+    } else if (state.message) {
+      toast.show(state.message, "success");
+      setTimeout(() => {
+        router.push("/login");
+      }, 800);
+    }
+  }, [state, setServerErrors, router]);
 
   /* Combine: prefer client errors (instant), fall back to server */
   const serverFieldErrors = !state.ok ? state.error.fieldErrors : undefined;
@@ -53,7 +103,12 @@ export function RegisterForm() {
     clientErrors[field]?.[0] ?? serverFieldErrors?.[field]?.[0];
 
   return (
-    <form action={formAction} className="flex flex-col gap-4" noValidate>
+    <form
+      action={formAction}
+      onSubmit={handleSubmit}
+      className="flex flex-col gap-4"
+      noValidate
+    >
       {/* ── Full Name ── */}
       <FormField htmlFor="register-name" label="Full name" error={getError("name")}>
         <div className={`${fieldShell} ${getError("name") ? "border-error" : ""}`}>
@@ -80,8 +135,9 @@ export function RegisterForm() {
             aria-invalid={Boolean(getError("name"))}
             aria-describedby={getError("name") ? "register-name-error" : undefined}
             className={inputClass}
+            value={values.name}
             onBlur={(e) => handleBlur("name", e.target.value)}
-            onChange={(e) => handleChange("name", e.target.value)}
+            onChange={(e) => updateValue("name", e.target.value)}
           />
         </div>
       </FormField>
@@ -112,8 +168,9 @@ export function RegisterForm() {
             aria-invalid={Boolean(getError("email"))}
             aria-describedby={getError("email") ? "register-email-error" : undefined}
             className={inputClass}
+            value={values.email}
             onBlur={(e) => handleBlur("email", e.target.value)}
-            onChange={(e) => handleChange("email", e.target.value)}
+            onChange={(e) => updateValue("email", e.target.value)}
           />
         </div>
       </FormField>
@@ -153,8 +210,9 @@ export function RegisterForm() {
               aria-invalid={Boolean(getError("phone"))}
               aria-describedby={getError("phone") ? "register-phone-error" : undefined}
               className={inputClass}
+              value={values.phone}
               onBlur={(e) => handleBlur("phone", e.target.value)}
-              onChange={(e) => handleChange("phone", e.target.value)}
+              onChange={(e) => updateValue("phone", e.target.value)}
             />
           </div>
         </div>
@@ -217,10 +275,9 @@ export function RegisterForm() {
                     aria-invalid={Boolean(getError("whatsappPhone"))}
                     aria-describedby={getError("whatsappPhone") ? "register-whatsapp-error" : undefined}
                     className={inputClass}
+                    value={values.whatsappPhone}
                     onBlur={(e) => handleBlur("whatsappPhone", e.target.value)}
-                    onChange={(e) =>
-                      handleChange("whatsappPhone", e.target.value)
-                    }
+                    onChange={(e) => updateValue("whatsappPhone", e.target.value)}
                   />
                 </div>
               </div>
@@ -255,8 +312,9 @@ export function RegisterForm() {
             aria-invalid={Boolean(getError("password"))}
             aria-describedby={`register-password-requirements${getError("password") ? " register-password-error" : ""}`}
             className={`${inputClass} pr-9`}
+            value={values.password}
             onBlur={(e) => handleBlur("password", e.target.value)}
-            onChange={(e) => handleChange("password", e.target.value)}
+            onChange={(e) => updateValue("password", e.target.value)}
           />
           <button
             type="button"
@@ -299,17 +357,35 @@ export function RegisterForm() {
         </div>
 
         {/* Password requirements bullets */}
-        <div id="register-password-requirements" className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 font-sans text-[11px] text-on-surface-variant/75">
-          <span className="flex items-center gap-1.5">
-            <span className="w-1 h-1 rounded-full bg-on-surface-variant/60" />
+        <div id="register-password-requirements" className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 font-sans text-[11px] select-none">
+          <span className={cn(
+            "flex items-center gap-1.5 transition-colors duration-200",
+            hasMinLength ? "text-on-background font-semibold" : "text-on-surface-variant/50"
+          )}>
+            <span className={cn(
+              "w-1 h-1 transition-colors duration-200",
+              hasMinLength ? "bg-primary" : "bg-on-surface-variant/35"
+            )} />
             At least 8 characters
           </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-1 h-1 rounded-full bg-on-surface-variant/60" />
+          <span className={cn(
+            "flex items-center gap-1.5 transition-colors duration-200",
+            hasNumber ? "text-on-background font-semibold" : "text-on-surface-variant/50"
+          )}>
+            <span className={cn(
+              "w-1 h-1 transition-colors duration-200",
+              hasNumber ? "bg-primary" : "bg-on-surface-variant/35"
+            )} />
             One number
           </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-1 h-1 rounded-full bg-on-surface-variant/60" />
+          <span className={cn(
+            "flex items-center gap-1.5 transition-colors duration-200",
+            hasSpecialChar ? "text-on-background font-semibold" : "text-on-surface-variant/50"
+          )}>
+            <span className={cn(
+              "w-1 h-1 transition-colors duration-200",
+              hasSpecialChar ? "bg-primary" : "bg-on-surface-variant/35"
+            )} />
             One special character
           </span>
         </div>
@@ -341,8 +417,9 @@ export function RegisterForm() {
             aria-invalid={Boolean(getError("confirmPassword"))}
             aria-describedby={getError("confirmPassword") ? "register-confirm-password-error" : undefined}
             className={`${inputClass} pr-9`}
+            value={values.confirmPassword}
             onBlur={(e) => handleBlur("confirmPassword", e.target.value)}
-            onChange={(e) => handleChange("confirmPassword", e.target.value)}
+            onChange={(e) => updateValue("confirmPassword", e.target.value)}
           />
           <button
             type="button"
@@ -403,7 +480,7 @@ export function RegisterForm() {
         type="submit"
         disabled={pending}
         aria-busy={pending}
-        className="mt-3 min-h-12 w-full py-3 font-sans text-xs font-semibold tracking-[0.12em] shadow-[0_10px_30px_rgba(0,0,0,0.08)] hover:-translate-y-px"
+        className="mt-3 min-h-12 w-full py-3 font-sans text-xs font-semibold tracking-[0.12em] hover:-translate-y-px"
       >
         {pending ? "Creating account…" : "Create account"}
       </Button>
