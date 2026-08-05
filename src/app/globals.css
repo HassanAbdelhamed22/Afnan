@@ -16,6 +16,7 @@
 
   --primary: #000000;
   --on-primary: #ffffff;
+  --primary-hover: #262626;
   --primary-container: #1b1b1b;
   --on-primary-container: #848484;
 
@@ -49,6 +50,7 @@
 
   --primary: #ffffff;
   --on-primary: #000000;
+  --primary-hover: #e5e5e5;
   --primary-container: #f1f1f1;
   --on-primary-container: #a3a3a3;
 
@@ -82,6 +84,7 @@
 
   --color-primary: var(--primary);
   --color-on-primary: var(--on-primary);
+  --color-primary-hover: var(--primary-hover);
   --color-primary-container: var(--primary-container);
   --color-on-primary-container: var(--on-primary-container);
 
