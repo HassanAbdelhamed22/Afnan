@@ -31,12 +31,15 @@ export async function registerAction(
   _previousState: ActionResult<EmptyData>,
   formData: FormData,
 ): Promise<ActionResult<EmptyData>> {
+  const rawWhatsAppPhone = formData.get("whatsappPhone");
+  const rawSameAsWhatsApp = formData.get("sameAsWhatsApp");
+  
   const parsed = registerSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
     phone: formData.get("phone"),
-    whatsappPhone:
-      formData.get("whatsappPhone"),
+    whatsappPhone: rawWhatsAppPhone ?? "",
+    sameAsWhatsApp: rawSameAsWhatsApp ?? (rawWhatsAppPhone ? "false" : "true"),
     password: formData.get("password"),
     confirmPassword:
       formData.get("confirmPassword"),
@@ -50,6 +53,14 @@ export async function registerAction(
     );
   }
 
+  const isSame =
+    parsed.data.sameAsWhatsApp === "true" ||
+    parsed.data.sameAsWhatsApp === "on";
+
+  const rawWhatsApp = isSame
+    ? parsed.data.phone
+    : parsed.data.whatsappPhone || parsed.data.phone;
+
   let phoneE164: string;
   let whatsappE164: string;
 
@@ -60,9 +71,7 @@ export async function registerAction(
       );
 
     whatsappE164 =
-      normalizeEgyptianPhone(
-        parsed.data.whatsappPhone,
-      );
+      normalizeEgyptianPhone(rawWhatsApp);
   } catch {
     return actionFailure(
       "VALIDATION_ERROR",

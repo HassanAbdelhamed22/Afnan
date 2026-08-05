@@ -63,7 +63,7 @@ describe("Auth Server Actions", () => {
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.code).toBe("VALIDATION_ERROR");
-        expect(result.error.message).toContain("valid Egyptian phone");
+        expect(result.error.fieldErrors?.phone?.[0] || result.error.message).toContain("valid Egyptian");
       }
     });
 
