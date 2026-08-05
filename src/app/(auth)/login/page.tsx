@@ -1,10 +1,34 @@
-import React from "react";
+import type { Metadata } from "next";
 
-export default function LoginPage() {
+import { LoginForm } from "@/components/auth/login-form";
+
+export const metadata: Metadata = {
+  title: "Sign In — Afnan",
+  description:
+    "Sign in to your Afnan account to browse handmade products and manage orders.",
+};
+
+type LoginPageProps = {
+  searchParams: Promise<{ returnTo?: string }>;
+};
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const { returnTo } = await searchParams;
+
   return (
-    <div className="max-w-md mx-auto py-12 px-4">
-      <h1 className="text-2xl font-bold mb-6">Log In</h1>
-      <p className="text-neutral-600">Access your Afnan account.</p>
-    </div>
+    <>
+      <header className="mb-9 sm:mb-10">
+        {/* Mobile-only brand hint (desktop sees the brand panel) */}
+        <p className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.18em] text-on-surface-variant lg:hidden">
+          Welcome to Afnan
+        </p>
+        <h1 className="mb-2 font-serif text-[2.25rem] leading-tight tracking-tight text-on-background sm:text-[2.5rem]">Welcome back</h1>
+        <p className="text-sm leading-6 text-on-surface-variant sm:text-base">
+          Sign in to your account
+        </p>
+      </header>
+
+      <LoginForm returnTo={returnTo} />
+    </>
   );
 }
