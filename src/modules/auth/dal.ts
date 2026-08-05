@@ -16,6 +16,8 @@ export const getCurrentSession =
     });
   });
 
+export const verifySession = getCurrentSession;
+
 export async function requireUser() {
   const session =
     await getCurrentSession();
@@ -33,6 +35,10 @@ export async function requireUser() {
   }
 
   return session;
+}
+
+export async function requireVerifiedUser() {
+  return requireUser();
 }
 
 export async function requireAdmin() {

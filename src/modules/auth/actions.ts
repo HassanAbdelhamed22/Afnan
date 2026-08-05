@@ -8,6 +8,7 @@ import {
 } from "better-auth/api";
 
 import { auth } from "@/lib/auth/auth";
+import { authDatabase } from "@/lib/auth/mongo-client";
 import { env } from "@/lib/env";
 import {
   actionFailure,
@@ -84,6 +85,38 @@ export async function registerAction(
     );
   }
 
+  // Verify email and phone number uniqueness to return high-fidelity inline errors
+  try {
+    const normalizedEmail = parsed.data.email.trim().toLowerCase();
+    const existingUser = await authDatabase.collection("user").findOne({
+      $or: [
+        { email: normalizedEmail },
+        { phoneE164: phoneE164 }
+      ]
+    });
+
+    if (existingUser) {
+      const fieldErrors: Record<string, string[]> = {};
+      if (existingUser.email === normalizedEmail) {
+        fieldErrors.email = ["This email address is already registered"];
+      }
+      if (existingUser.phoneE164 === phoneE164) {
+        fieldErrors.phone = ["This phone number is already registered"];
+      }
+      return actionFailure(
+        "VALIDATION_ERROR",
+        "Email or phone number is already registered",
+        fieldErrors
+      );
+    }
+  } catch (error) {
+    console.error("Database query error during email/phone check", error);
+    return actionFailure(
+      "INTERNAL_ERROR",
+      "Registration check could not be completed"
+    );
+  }
+
   try {
     await auth.api.signUpEmail({
       headers: await headers(),
@@ -119,9 +152,9 @@ export async function registerAction(
 }
 
 export async function loginAction(
-  _previousState: ActionResult<EmptyData>,
+  _previousState: ActionResult<{ redirectTo: string }>,
   formData: FormData,
-): Promise<ActionResult<EmptyData>> {
+): Promise<ActionResult<{ redirectTo: string }>> {
   const parsed = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
@@ -166,11 +199,25 @@ export async function loginAction(
     throw error;
   }
 
-  /*
-   * redirect() throws internally, so keep it
-   * outside the try/catch.
-   */
-  redirect(returnTo);
+  // Fetch user role from database directly since headers() doesn't contain the new session cookie yet
+  let userRole = "CUSTOMER";
+  try {
+    const dbUser = await authDatabase.collection("user").findOne({
+      email: parsed.data.email.trim().toLowerCase(),
+    });
+    if (dbUser) {
+      userRole = dbUser.role || "CUSTOMER";
+    }
+  } catch (error) {
+    console.error("Failed to query user role during login redirect check:", error);
+  }
+
+  const redirectTo = userRole === "ADMIN" ? "/admin" : returnTo;
+
+  return actionSuccess(
+    { redirectTo },
+    "Welcome back!",
+  );
 }
 
 export async function logoutAction(): Promise<never> {

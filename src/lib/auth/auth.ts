@@ -1,6 +1,7 @@
 import "server-only";
 
 import { after } from "next/server";
+import { ObjectId } from "mongodb";
 
 import { betterAuth } from "better-auth";
 import { APIError } from "better-auth/api";
@@ -157,12 +158,25 @@ export const auth = betterAuth({
     session: {
       create: {
         before: async (session) => {
+          /*
+           * The MongoDB adapter persists user IDs in `_id` as ObjectId.
+           * Better Auth exposes the same value to hooks as a string.
+           */
+          if (!ObjectId.isValid(session.userId)) {
+            throw new APIError("FORBIDDEN", {
+              message:
+                "This account is unavailable",
+            });
+          }
+
           const user =
             await authDatabase
               .collection("user")
               .findOne(
                 {
-                  id: session.userId,
+                  _id: new ObjectId(
+                    session.userId,
+                  ),
                 },
                 {
                   projection: {

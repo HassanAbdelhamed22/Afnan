@@ -1,5 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+const mockFindOne = vi.fn();
+vi.mock("@/lib/auth/mongo-client", () => {
+  return {
+    authDatabase: {
+      collection: vi.fn(() => ({
+        findOne: mockFindOne,
+      })),
+    },
+    authMongoClient: {},
+  };
+});
+
 import { registerAction, loginAction, logoutAction, forgotPasswordAction, resetPasswordAction } from "@/modules/auth/actions";
 import { auth } from "@/lib/auth/auth";
 import { redirect } from "next/navigation";
@@ -22,6 +34,7 @@ vi.mock("@/lib/auth/auth", () => {
         signOut: vi.fn(),
         requestPasswordReset: vi.fn(),
         resetPassword: vi.fn(),
+        getSession: vi.fn(),
       },
     },
   };
@@ -33,9 +46,12 @@ vi.mock("@/lib/env", () => ({
   },
 }));
 
+export { mockFindOne };
+
 describe("Auth Server Actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFindOne.mockResolvedValue(null);
   });
 
   describe("registerAction", () => {
@@ -56,8 +72,8 @@ describe("Auth Server Actions", () => {
       formData.append("email", "hassan@example.com");
       formData.append("phone", "12345");
       formData.append("whatsappPhone", "01012345678");
-      formData.append("password", "password123");
-      formData.append("confirmPassword", "password123");
+      formData.append("password", "P@ssword123!");
+      formData.append("confirmPassword", "P@ssword123!");
 
       const result = await registerAction({ ok: true, data: {} }, formData);
       expect(result.ok).toBe(false);
@@ -73,8 +89,8 @@ describe("Auth Server Actions", () => {
       formData.append("email", "hassan@example.com");
       formData.append("phone", "01012345678");
       formData.append("whatsappPhone", "01112345678");
-      formData.append("password", "password123");
-      formData.append("confirmPassword", "password123");
+      formData.append("password", "P@ssword123!");
+      formData.append("confirmPassword", "P@ssword123!");
 
       vi.mocked(auth.api.signUpEmail).mockResolvedValue({} as unknown as never);
 
@@ -85,36 +101,107 @@ describe("Auth Server Actions", () => {
           body: {
             name: "Hassan",
             email: "hassan@example.com",
-            password: "password123",
+            password: "P@ssword123!",
             phoneE164: "+201012345678",
             whatsappE164: "+201112345678",
           },
         })
       );
     });
+
+    it("should return validation error failure if email is already registered", async () => {
+      const formData = new FormData();
+      formData.append("name", "Hassan");
+      formData.append("email", "duplicate@example.com");
+      formData.append("phone", "01012345678");
+      formData.append("whatsappPhone", "01112345678");
+      formData.append("password", "P@ssword123!");
+      formData.append("confirmPassword", "P@ssword123!");
+
+      mockFindOne.mockResolvedValueOnce({
+        email: "duplicate@example.com",
+        phoneE164: "+20199999999",
+      });
+
+      const result = await registerAction({ ok: true, data: {} }, formData);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe("VALIDATION_ERROR");
+        expect(result.error.fieldErrors?.email?.[0]).toContain("already registered");
+      }
+    });
+
+    it("should return validation error failure if phone number is already registered", async () => {
+      const formData = new FormData();
+      formData.append("name", "Hassan");
+      formData.append("email", "hassan@example.com");
+      formData.append("phone", "01012345678");
+      formData.append("whatsappPhone", "01112345678");
+      formData.append("password", "P@ssword123!");
+      formData.append("confirmPassword", "P@ssword123!");
+
+      mockFindOne.mockResolvedValueOnce({
+        email: "other@example.com",
+        phoneE164: "+201012345678",
+      });
+
+      const result = await registerAction({ ok: true, data: {} }, formData);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe("VALIDATION_ERROR");
+        expect(result.error.fieldErrors?.phone?.[0]).toContain("already registered");
+      }
+    });
   });
 
   describe("loginAction", () => {
     it("should return validation error failure if fields are missing", async () => {
       const formData = new FormData();
-      const result = await loginAction({ ok: true, data: {} }, formData);
+      const result = await loginAction({ ok: true, data: { redirectTo: "" } }, formData);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.code).toBe("VALIDATION_ERROR");
       }
     });
 
-    it("should call auth.api.signInEmail and redirect on success", async () => {
+    it("should call auth.api.signInEmail and return shop redirection on success for normal customer", async () => {
       const formData = new FormData();
       formData.append("email", "hassan@example.com");
-      formData.append("password", "password123");
+      formData.append("password", "P@ssword123!");
       formData.append("returnTo", "/shop");
 
       vi.mocked(auth.api.signInEmail).mockResolvedValue({} as unknown as never);
+      mockFindOne.mockResolvedValueOnce({
+        email: "hassan@example.com",
+        role: "CUSTOMER",
+      });
 
-      await loginAction({ ok: true, data: {} }, formData);
+      const result = await loginAction({ ok: true, data: { redirectTo: "" } }, formData);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.redirectTo).toBe("/shop");
+      }
       expect(auth.api.signInEmail).toHaveBeenCalled();
-      expect(redirect).toHaveBeenCalledWith("/shop");
+    });
+
+    it("should call auth.api.signInEmail and return admin redirection on success for admin user", async () => {
+      const formData = new FormData();
+      formData.append("email", "hassan@example.com");
+      formData.append("password", "P@ssword123!");
+      formData.append("returnTo", "/shop");
+
+      vi.mocked(auth.api.signInEmail).mockResolvedValue({} as unknown as never);
+      mockFindOne.mockResolvedValueOnce({
+        email: "hassan@example.com",
+        role: "ADMIN",
+      });
+
+      const result = await loginAction({ ok: true, data: { redirectTo: "" } }, formData);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.redirectTo).toBe("/admin");
+      }
+      expect(auth.api.signInEmail).toHaveBeenCalled();
     });
 
     it("should return invalid credentials failure on auth APIError", async () => {
@@ -125,7 +212,7 @@ describe("Auth Server Actions", () => {
       const mockError = new APIError("UNAUTHORIZED", { message: "Invalid email or password" });
       vi.mocked(auth.api.signInEmail).mockRejectedValue(mockError);
 
-      const result = await loginAction({ ok: true, data: {} }, formData);
+      const result = await loginAction({ ok: true, data: { redirectTo: "" } }, formData);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.code).toBe("INVALID_CREDENTIALS");
@@ -166,8 +253,8 @@ describe("Auth Server Actions", () => {
     it("should call auth.api.resetPassword and return success on correct inputs", async () => {
       const formData = new FormData();
       formData.append("token", "valid-token");
-      formData.append("password", "newpassword123");
-      formData.append("confirmPassword", "newpassword123");
+      formData.append("password", "newP@ssword123!");
+      formData.append("confirmPassword", "newP@ssword123!");
 
       vi.mocked(auth.api.resetPassword).mockResolvedValue({} as unknown as never);
 
@@ -176,7 +263,7 @@ describe("Auth Server Actions", () => {
       expect(auth.api.resetPassword).toHaveBeenCalledWith({
         body: {
           token: "valid-token",
-          newPassword: "newpassword123",
+          newPassword: "newP@ssword123!",
         },
       });
     });
@@ -184,8 +271,8 @@ describe("Auth Server Actions", () => {
     it("should return invalid state failure if resetPassword throws", async () => {
       const formData = new FormData();
       formData.append("token", "invalid-token");
-      formData.append("password", "newpassword123");
-      formData.append("confirmPassword", "newpassword123");
+      formData.append("password", "newP@ssword123!");
+      formData.append("confirmPassword", "newP@ssword123!");
 
       vi.mocked(auth.api.resetPassword).mockRejectedValue(new Error("Database error"));
 
