@@ -1,7 +1,23 @@
+"use client";
+
 import * as React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export function Footer() {
+  const pathname = usePathname();
+  
+  const isAuthPage =
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname === "/forgot-password" ||
+    pathname === "/reset-password" ||
+    pathname?.startsWith("/reset-password");
+
+  if (isAuthPage) {
+    return null;
+  }
+
   return (
     <footer className="w-full bg-surface border-t border-solid border-outline-variant py-16 text-on-surface transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
@@ -10,7 +26,7 @@ export function Footer() {
         <div className="flex flex-col gap-4">
           <h3 className="font-serif text-xl tracking-wide font-normal">Afnan</h3>
           <p className="body-md text-on-surface opacity-70">
-            Egypt's dedicated platform for premium handmade products. Crafted with love, delivered to your doorstep.
+            Egypt&apos;s dedicated platform for premium handmade products. Crafted with love, delivered to your doorstep.
           </p>
           <div className="mt-2 flex flex-col gap-1.5 font-sans label-caps text-xs text-on-surface opacity-60">
             <div>Egypt Shipping Only</div>

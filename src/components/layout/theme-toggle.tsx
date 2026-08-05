@@ -9,17 +9,19 @@ export function ThemeToggle() {
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
-    setMounted(true);
+    const frame = window.requestAnimationFrame(() => setMounted(true));
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   if (!mounted) {
-    return <div className="w-9 h-9" />;
+    return <div aria-hidden="true" className="size-11" />;
   }
 
   return (
     <button
+      type="button"
       onClick={toggleTheme}
-      className="p-2 text-on-background hover:opacity-60 transition-opacity bg-transparent border-none cursor-pointer flex items-center justify-center"
+      className="flex size-11 cursor-pointer items-center justify-center border-none bg-transparent text-on-background outline-none transition-colors hover:bg-surface-container-low focus-visible:ring-2 focus-visible:ring-primary"
       aria-label="Toggle dark/light mode"
     >
       {theme === "light" ? (
