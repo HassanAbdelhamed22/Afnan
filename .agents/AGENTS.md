@@ -42,3 +42,50 @@ Always use the custom editorial typography classes defined in `globals.css`:
 
 ### Maker's Note Component
 *   **Structure**: Container styled with `bg-surface border border-outline-variant py-8 px-6 text-on-surface`. Used on product detail pages for storytelling.
+
+---
+
+## 5. Database & Authentication Design Rules
+*   **Better Auth User References**: Better Auth uses string user IDs by default. Therefore, your business collections (like carts, orders, custom requests) must use a **String** for authentication and user references:
+    ```typescript
+    userId: {
+      type: String,
+      required: true,
+      index: true,
+    }
+    ```
+*   **Mongoose Schema Constraints**: Do not define Better Auth user references as Mongoose `Schema.Types.ObjectId` unless you deliberately change Better Auth's ID-generation strategy. Better Auth's core user and session schemas use string IDs.
+    *   **TypeScript representation**:
+        ```typescript
+        interface Order {
+          _id: Types.ObjectId;
+          userId: string;
+        }
+        ```
+*   **Mongoose Connection**: Always call `await connectMongoose()` (imported from `@/lib/mongoose`) inside repositories, services, or a shared model helper before executing any domain queries or database operations. Do not assume active connection.
+*   **Public Register Protections**: Ensure all user schema fields that control access controls or status limits (e.g. `role` and `status`) are configured with `input: false` inside the Better Auth options. This prevents registration input payload attacks from granting admin access.
+*   **Client Session Restrictions**: The client-side `useSession()` hook is strictly for reactive UI elements (names, navbar indicators). Never use it as the final security authorization check for actions or data modifications—server-side checks must always be performed.
+*   **Optimistic Proxy Middleware**: Optimistic path protections are configured inside `src/proxy.ts` checking for basic cookie existence. Emphasize that this is optimistic; final and secure authorization must always occur on the server side using the DAL utilities.
+*   **Deduplicated Server Validation (DAL)**: All final server-side authorization validation must be fetched using `getCurrentSession()`, `requireUser()`, or `requireAdmin()` (from `@/modules/auth/dal`). Call these helpers inside Server Components, Server Actions, and Route Handlers instead of executing custom session fetches.
+
+
+---
+
+## 6. Validation & Error Handling Rules
+*   **Egyptian Phone Normalization**: Always validate and normalize Egyptian mobile numbers using `normalizeEgyptianPhone()` (from `@/lib/phone`) to standard E.164 (`+20...`) format. Reject formatting mismatches.
+*   **Error Disclosure Restrictions**: Under no circumstances should database internals, stack traces, environment variables, cookie values, reset tokens, or raw provider errors reach client query outputs. Always sanitize exceptions using `errorToApiResponse()` or similar mapping.
+
+---
+
+## 7. HTTP & API Protocol Contracts
+*   **Server Actions**: Since Server Actions do not return HTTP status codes, they must always return the typed `ActionResult<T>` structure using `actionSuccess()` or `actionFailure()` (imported from `@/lib/results/action-result`).
+*   **Route Handlers**: Wrap all custom API Route Handlers (GET, POST, PUT, DELETE) with the `withApiHandler()` (from `@/lib/http/with-api-handler`) higher-order function, and use the `apiSuccess()` or `apiFailure()` (from `@/lib/http/api-response`) helpers to structure responses.
+*   **Better Auth Exceptions**: Do not wrap Better Auth's native `/api/auth/[...all]` endpoint routes with `withApiHandler` or the `apiSuccess`/`apiFailure` wrappers. Better Auth clients expect Better Auth's native response formats.
+*   **Local Redirect Validation**: Never redirect user sessions directly to arbitrary user input URLs. All user-input redirect URL parameters must pass through the `getSafeReturnTo()` validator to restrict redirects to relative paths (starting with `/`, but not `//`).
+*   **Layout Protection & Boundary Catching**: Admin and customer layout files must wrap their content inside a `try/catch` block calling `requireUser()` or `requireAdmin()`. Catch `UnauthenticatedError` to redirect users (e.g. `/login?returnTo=...`) and catch `ForbiddenError` to trigger `notFound()`.
+*   **Inline Action Guards**: Every Server Action is a public entry point and must call `requireUser()` or `requireAdmin()` at the very beginning of the function body before parsing inputs or running logic.
+*   **Resource Ownership Query Filters**: Never fetch a document first and check ownership in application code later. Always enforce database-level ownership constraints directly inside the query filter parameters (e.g., `{ _id: recordId, userId: session.user.id }`).
+
+
+
+
