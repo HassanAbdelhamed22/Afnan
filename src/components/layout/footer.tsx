@@ -14,7 +14,9 @@ export function Footer() {
     pathname === "/reset-password" ||
     pathname?.startsWith("/reset-password");
 
-  if (isAuthPage) {
+  const isAdminRoute = pathname?.startsWith("/admin");
+
+  if (isAuthPage || isAdminRoute) {
     return null;
   }
 

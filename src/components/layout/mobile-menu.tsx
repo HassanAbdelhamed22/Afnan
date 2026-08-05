@@ -2,10 +2,12 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 import { Drawer } from "../ui/drawer";
+import { useSession, signOut } from "@/lib/auth/auth-client";
+import { toast } from "@/components/ui/toast";
 
 const primaryLinks = [
   { href: "/", label: "Home" },
@@ -13,16 +15,22 @@ const primaryLinks = [
   { href: "/custom-request", label: "Custom request" },
 ];
 
-const accountLinks = [
-  { href: "/account/profile", label: "My account" },
-  { href: "/account/orders", label: "My orders" },
-  { href: "/account/wishlist", label: "Wishlist" },
-];
-
 export function MobileMenu() {
   const [isOpen, setIsOpen] = React.useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const closeMenu = React.useCallback(() => setIsOpen(false), []);
+  const { data: session } = useSession();
+  const user = session?.user;
+
+  const handleLogout = async () => {
+    await signOut();
+    toast.show("Logged out successfully.", "success");
+    setTimeout(() => {
+      router.push("/");
+      router.refresh();
+    }, 800);
+  };
 
   return (
     <>
@@ -85,25 +93,71 @@ export function MobileMenu() {
 
           <div className="mt-9">
             <p className="mb-3 font-sans text-[0.625rem] font-bold uppercase tracking-[0.2em] text-on-surface-variant">
-              Your account
+              {user ? `Hi, ${user.name.split(" ")[0]}` : "Your account"}
             </p>
             <nav aria-label="Account navigation" className="grid gap-1">
-              {accountLinks.map(({ href, label }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  onClick={closeMenu}
-                  className="flex min-h-11 items-center justify-between px-3 font-sans text-sm font-medium text-on-background no-underline outline-none transition-colors hover:bg-surface-container-low focus-visible:bg-surface-container-low"
-                >
-                  {label}
-                  <span aria-hidden="true" className="text-on-surface-variant">→</span>
-                </Link>
-              ))}
+              {user ? (
+                <>
+                  <Link
+                    href="/account/profile"
+                    onClick={closeMenu}
+                    className="flex min-h-11 items-center justify-between px-3 font-sans text-sm font-medium text-on-background no-underline outline-none transition-colors hover:bg-surface-container-low focus-visible:bg-surface-container-low"
+                  >
+                    My Profile
+                    <span aria-hidden="true" className="text-on-surface-variant">→</span>
+                  </Link>
+                  <Link
+                    href="/account/orders"
+                    onClick={closeMenu}
+                    className="flex min-h-11 items-center justify-between px-3 font-sans text-sm font-medium text-on-background no-underline outline-none transition-colors hover:bg-surface-container-low focus-visible:bg-surface-container-low"
+                  >
+                    My Orders
+                    <span aria-hidden="true" className="text-on-surface-variant">→</span>
+                  </Link>
+                  <Link
+                    href="/account/wishlist"
+                    onClick={closeMenu}
+                    className="flex min-h-11 items-center justify-between px-3 font-sans text-sm font-medium text-on-background no-underline outline-none transition-colors hover:bg-surface-container-low focus-visible:bg-surface-container-low"
+                  >
+                    Wishlist
+                    <span aria-hidden="true" className="text-on-surface-variant">→</span>
+                  </Link>
+                  <button
+                    onClick={() => {
+                      closeMenu();
+                      handleLogout();
+                    }}
+                    className="flex min-h-11 items-center justify-between px-3 text-left font-sans text-sm font-medium text-on-surface-variant no-underline outline-none transition-colors hover:bg-surface-container-low focus-visible:bg-surface-container-low border-none bg-transparent cursor-pointer"
+                  >
+                    Sign Out
+                    <span aria-hidden="true" className="text-on-surface-variant font-sans">→</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    onClick={closeMenu}
+                    className="flex min-h-11 items-center justify-between px-3 font-sans text-sm font-medium text-on-background no-underline outline-none transition-colors hover:bg-surface-container-low focus-visible:bg-surface-container-low"
+                  >
+                    Sign In
+                    <span aria-hidden="true" className="text-on-surface-variant">→</span>
+                  </Link>
+                  <Link
+                    href="/register"
+                    onClick={closeMenu}
+                    className="flex min-h-11 items-center justify-between px-3 font-sans text-sm font-medium text-on-background no-underline outline-none transition-colors hover:bg-surface-container-low focus-visible:bg-surface-container-low"
+                  >
+                    Create Account
+                    <span aria-hidden="true" className="text-on-surface-variant">→</span>
+                  </Link>
+                </>
+              )}
             </nav>
           </div>
 
           <div className="mt-auto border-t border-outline-variant pt-5">
-            <p className="font-sans text-[0.6875rem] uppercase leading-5 tracking-[0.1em] text-on-surface-variant">
+            <p className="font-sans text-[0.6875rem] uppercase leading-5 tracking-widest text-on-surface-variant">
               Handmade in Egypt<br />Cash on delivery · EGP only
             </p>
           </div>
