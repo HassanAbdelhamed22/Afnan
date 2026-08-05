@@ -4,16 +4,37 @@ import { cn } from "@/lib/utils";
 
 export interface FormFieldProps extends React.HTMLAttributes<HTMLDivElement> {
   label?: string;
+  htmlFor?: string;
   error?: string;
   children: React.ReactNode;
 }
 
-export function FormField({ className, label, error, children, ...props }: FormFieldProps) {
+export function FormField({
+  className,
+  label,
+  htmlFor,
+  error,
+  children,
+  ...props
+}: FormFieldProps) {
+  const errorId = htmlFor ? `${htmlFor}-error` : undefined;
+
   return (
     <div className={cn("flex flex-col gap-1.5 w-full", className)} {...props}>
-      {label && <span className="font-sans label-caps text-xs text-on-background/60">{label}</span>}
+      {label && (
+        <label
+          htmlFor={htmlFor}
+          className="font-sans text-[0.6875rem] font-semibold uppercase leading-none tracking-[0.12em] text-on-background/65"
+        >
+          {label}
+        </label>
+      )}
       {children}
-      {error && <span className="font-sans text-xs text-red-600 mt-1">{error}</span>}
+      {error && (
+        <span id={errorId} role="alert" className="mt-1 font-sans text-xs text-error">
+          {error}
+        </span>
+      )}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import * as React from "react";
+import { createPortal } from "react-dom";
 
 import { cn } from "@/lib/utils";
 
@@ -11,37 +12,69 @@ export interface DrawerProps {
 }
 
 export function Drawer({ isOpen, onClose, title, children, className }: DrawerProps) {
+  const titleId = React.useId();
+  const closeButtonRef = React.useRef<HTMLButtonElement>(null);
+
   React.useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
+    if (!isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    document.body.style.overflow = "hidden";
+
+    const focusFrame = window.requestAnimationFrame(() => {
+      closeButtonRef.current?.focus();
+    });
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
     };
-  }, [isOpen]);
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.cancelAnimationFrame(focusFrame);
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previouslyFocused?.focus();
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex justify-end">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex justify-end" role="presentation">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-neutral-900/40 backdrop-blur-sm transition-opacity duration-300"
+      <button
+        type="button"
+        aria-label="Close drawer"
+        className="absolute inset-0 cursor-default border-0 bg-neutral-950/45 p-0 backdrop-blur-[2px]"
         onClick={onClose}
       />
       {/* Content */}
-      <div className={cn("relative z-10 w-full max-w-md h-full bg-surface border-l border-solid border-outline-variant flex flex-col justify-between transition-transform duration-300 translate-x-0", className)}>
-        <div className="p-6 flex items-center justify-between border-b border-solid border-outline-variant">
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        aria-label={title ? undefined : "Drawer"}
+        className={cn(
+          "relative z-10 flex h-[100dvh] w-[min(88vw,24rem)] flex-col border-l border-solid border-outline-variant bg-surface shadow-[-20px_0_60px_rgba(0,0,0,0.14)]",
+          className,
+        )}
+      >
+        <div className="flex min-h-16 items-center justify-between border-b border-solid border-outline-variant px-5 sm:min-h-20 sm:px-6">
           {title ? (
-            <h2 className="headline-sm text-on-background m-0">{title}</h2>
+            <h2 id={titleId} className="m-0 font-serif text-2xl leading-none text-on-background">
+              {title}
+            </h2>
           ) : (
             <div />
           )}
           <button
+            ref={closeButtonRef}
+            type="button"
             onClick={onClose}
-            className="text-on-background hover:opacity-60 transition-opacity p-1 bg-transparent border-none cursor-pointer"
+            className="flex size-11 cursor-pointer items-center justify-center border-none bg-transparent text-on-background outline-none transition-colors hover:bg-surface-container-low focus-visible:ring-2 focus-visible:ring-primary"
             aria-label="Close drawer"
           >
             <svg
@@ -59,8 +92,11 @@ export function Drawer({ isOpen, onClose, title, children, className }: DrawerPr
             </svg>
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-6">{children}</div>
-      </div>
-    </div>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-6 sm:px-6">
+          {children}
+        </div>
+      </section>
+    </div>,
+    document.body,
   );
 }

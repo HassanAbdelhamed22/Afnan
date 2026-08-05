@@ -10,7 +10,7 @@ export interface CheckboxProps
 const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   ({ className, label, ...props }, ref) => {
     return (
-      <label className={cn("inline-flex items-center gap-3 cursor-pointer select-none", className)}>
+      <label className={cn("inline-flex min-h-8 items-center gap-3 cursor-pointer select-none", className)}>
         <div className="relative">
           <input
             type="checkbox"
@@ -18,7 +18,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
             ref={ref}
             {...props}
           />
-          <div className="h-5 w-5 border border-solid border-outline-variant bg-transparent transition-colors duration-200 peer-checked:bg-primary peer-checked:border-primary flex items-center justify-center peer-checked:[&_svg]:scale-100">
+          <div className="flex h-5 w-5 items-center justify-center border border-solid border-outline-variant bg-surface transition-colors duration-200 peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background peer-checked:border-primary peer-checked:bg-primary peer-checked:[&_svg]:scale-100">
             <svg
               className="h-3.5 w-3.5 text-on-primary scale-0 transition-transform duration-200"
               fill="none"
@@ -34,7 +34,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
             </svg>
           </div>
         </div>
-        {label && <span className="font-sans text-sm text-on-background">{label}</span>}
+        {label && <span className="font-sans text-xs text-on-background sm:text-sm">{label}</span>}
       </label>
     );
   }
