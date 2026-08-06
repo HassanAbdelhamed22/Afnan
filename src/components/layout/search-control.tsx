@@ -43,7 +43,7 @@ export function SearchControl() {
       </button>
 
       {isOpen && (
-        <div className="fixed inset-x-0 top-0 z-[110] flex min-h-16 items-center justify-center border-b border-solid border-outline-variant bg-background px-3 shadow-[0_12px_40px_rgba(0,0,0,0.08)] sm:min-h-20 sm:px-6">
+        <div className="fixed inset-x-0 top-0 z-110 flex min-h-16 items-center justify-center border-b border-solid border-outline-variant bg-background px-3 shadow-[0_12px_40px_rgba(0,0,0,0.08)] sm:min-h-20 sm:px-6">
           <form role="search" action="/shop" method="GET" className="relative flex w-full max-w-2xl items-center gap-3 sm:gap-4">
             <svg aria-hidden="true" className="h-5 w-5 shrink-0 text-on-background/40 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
