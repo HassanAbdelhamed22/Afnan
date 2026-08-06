@@ -262,11 +262,9 @@ export async function rawGetCategoryBySlug(slug: string): Promise<CategoryDTO> {
   return mapCategoryToDTO(category);
 }
 
-// --- Cached Public Catalog Queries ---
-
 export const getCategoryNavigation = unstable_cache(
   async () => rawGetCategoryNavigation(),
-  ["category-navigation"],
+  ["category-navigation-v2"],
   { tags: [CACHE_TAGS.categories] }
 );
 

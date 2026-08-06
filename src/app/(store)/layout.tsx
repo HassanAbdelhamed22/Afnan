@@ -5,11 +5,5 @@ interface StoreLayoutProps {
 }
 
 export default function StoreLayout({ children }: StoreLayoutProps) {
-  return (
-    <div className="flex-1 flex flex-col">
-      {/* Store Header/Navbar will go here */}
-      <main className="flex-1 flex flex-col">{children}</main>
-      {/* Store Footer will go here */}
-    </div>
-  );
+  return <div className="flex min-w-0 flex-1 flex-col">{children}</div>;
 }
