@@ -15,69 +15,60 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
   const isOutOfStock = product.fulfillmentType === "READY_MADE" && !product.inStock;
 
   return (
-    <div className="group flex flex-col w-full relative">
-      <Link href={`/product/${product.slug}`} className="absolute inset-0 z-10">
-        <span className="sr-only">View {product.name}</span>
-      </Link>
-      
-      {/* Image Container with stable 4:5 ratio and #F7F7F5 background */}
-      <div className="relative aspect-4/5 w-full bg-[#F7F7F5] overflow-hidden flex items-center justify-center p-4 border border-outline-variant group-hover:border-primary transition-colors ease-expo-out duration-300">
+    <article className="w-full min-w-0">
+      <Link href={`/product/${product.slug}`} className="group block text-on-background no-underline outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4">
+      <div className="relative flex aspect-4/5 w-full items-center justify-center overflow-hidden border border-outline-variant bg-[#F7F7F5] transition-colors duration-300 ease-expo-out group-hover:border-primary">
         {mainImage ? (
           <Image
             src={mainImage.url}
             alt={product.name}
             fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
             priority={priority}
-            className="object-contain transition-transform ease-expo-out duration-500 group-hover:scale-105 p-2"
+            className="object-cover transition-transform duration-500 ease-expo-out group-hover:scale-[1.035]"
           />
         ) : (
           <ImagePlaceholder aspectRatio="4-5" text="No image" className="border-0 bg-transparent" />
         )}
 
-        {/* Badges container */}
-        <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-20">
+        <div className="absolute left-2 top-2 z-20 flex flex-col items-start gap-1.5 sm:left-3 sm:top-3">
           {product.fulfillmentType === "MADE_TO_ORDER" && (
-            <Badge variant="outline" className="text-[10px] py-0.5 px-2 bg-background border-outline-variant font-sans label-caps">
-              Custom Order
+            <Badge variant="outline" className="bg-background px-2 py-0.5 font-sans text-[0.55rem] font-bold uppercase tracking-[0.12em]">
+              Made to order
             </Badge>
           )}
           {isOutOfStock && (
-            <Badge variant="primary" className="text-[10px] py-0.5 px-2 bg-error border-error text-on-error font-sans label-caps">
+            <Badge variant="primary" className="border-error bg-error px-2 py-0.5 font-sans text-[0.55rem] font-bold uppercase tracking-[0.12em] text-on-error">
               Out of stock
             </Badge>
           )}
         </div>
       </div>
 
-      {/* Info Container with editorial style */}
-      <div className="flex flex-col pt-4">
-        {/* Category name if available */}
+      <div className="flex flex-col pt-3 sm:pt-4">
         {product.categoryName && (
-          <span className="text-[10px] font-sans label-caps text-on-surface-variant mb-1">
+          <span className="mb-1 font-sans text-[0.55rem] font-bold uppercase tracking-[0.16em] text-on-surface-variant sm:text-[0.625rem]">
             {product.categoryName}
           </span>
         )}
 
-        <div className="flex items-start justify-between gap-4">
-          {/* Title - EB Garamond (serif) */}
-          <h3 className="font-serif text-lg leading-snug text-on-background group-hover:underline group-hover:underline-offset-4 decoration-1">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+          <h3 className="font-serif text-base leading-tight text-on-background decoration-1 group-hover:underline group-hover:underline-offset-4 sm:text-lg">
             {product.name}
           </h3>
 
-          {/* Price - Manrope (sans-serif) */}
-          <span className="font-sans text-sm font-semibold text-on-background whitespace-nowrap pt-1">
+          <span className="whitespace-nowrap font-sans text-xs font-semibold text-on-background sm:pt-1 sm:text-sm">
             {formatEGP(product.basePriceAmount)}
           </span>
         </div>
 
-        {/* Made-to-order prep time indicator */}
         {product.fulfillmentType === "MADE_TO_ORDER" && product.preparationDaysMin && (
-          <span className="text-xs text-on-surface-variant font-sans mt-1">
-            Ships in {product.preparationDaysMin}-{product.preparationDaysMax} days
+          <span className="mt-1 font-sans text-[0.6875rem] leading-4 text-on-surface-variant sm:text-xs">
+            Preparation: {product.preparationDaysMin}-{product.preparationDaysMax} days
           </span>
         )}
       </div>
-    </div>
+      </Link>
+    </article>
   );
 }
