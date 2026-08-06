@@ -133,6 +133,30 @@ async function main() {
           width: 800,
           height: 1000,
         },
+        {
+          url: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?q=80&w=800",
+          publicId: "aswan-pot-2",
+          width: 800,
+          height: 1000,
+        },
+        {
+          url: "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?q=80&w=800",
+          publicId: "aswan-pot-3",
+          width: 800,
+          height: 1000,
+        },
+        {
+          url: "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=800",
+          publicId: "aswan-pot-4",
+          width: 800,
+          height: 1000,
+        },
+        {
+          url: "https://images.unsplash.com/photo-1574362848149-11496d93a7c7?q=80&w=800",
+          publicId: "aswan-pot-5",
+          width: 800,
+          height: 1000,
+        },
       ],
       variants: [
         {
@@ -222,6 +246,30 @@ async function main() {
         {
           url: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=800",
           publicId: "shawl-custom-1",
+          width: 800,
+          height: 1000,
+        },
+        {
+          url: "https://images.unsplash.com/photo-1575413758066-59c7333884e9?q=80&w=800",
+          publicId: "shawl-custom-2",
+          width: 800,
+          height: 1000,
+        },
+        {
+          url: "https://images.unsplash.com/photo-1582238525500-1c05dcfd22a2?q=80&w=800",
+          publicId: "shawl-custom-3",
+          width: 800,
+          height: 1000,
+        },
+        {
+          url: "https://images.unsplash.com/photo-1597843798944-7f285d6b4904?q=80&w=800",
+          publicId: "shawl-custom-4",
+          width: 800,
+          height: 1000,
+        },
+        {
+          url: "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?q=80&w=800",
+          publicId: "shawl-custom-5",
           width: 800,
           height: 1000,
         },
@@ -661,6 +709,114 @@ async function main() {
         },
       ],
       isFeatured: false,
+    },
+    // 13. Custom Fayoum Pottery Dinner Set (Made to order)
+    {
+      name: "Custom Fayoum Pottery Dinner Set",
+      slug: "custom-fayoum-pottery-set",
+      description: "A complete hand-thrown pottery dinner set customized to your preferred glaze finish. Crafted in Fayoum's Tunis Village.",
+      categoryId: catClay._id,
+      status: "ACTIVE",
+      fulfillmentType: "MADE_TO_ORDER",
+      basePriceAmount: 240000, // EGP 2,400.00
+      currency: "EGP",
+      materials: ["Clay", "Natural Glaze"],
+      colors: ["Green", "Brown", "Cream"],
+      tags: ["pottery", "dinner-set", "clay", "fayoum"],
+      personalizationAvailable: true,
+      personalizationInstructions: "Specify glaze preferences (e.g. speckled green, matte white).",
+      preparationDaysMin: 15,
+      preparationDaysMax: 20,
+      images: [
+        {
+          url: "https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=800",
+          publicId: "fayoum-pottery-set-1",
+          width: 800,
+          height: 1000,
+        },
+      ],
+      variants: [
+        {
+          sku: "SET-FAY-STD",
+          label: "Standard Set (12 pcs)",
+          optionValues: new Map([["size", "Standard"]]),
+          isActive: true,
+        },
+      ],
+      isFeatured: false,
+      publishedAt: new Date("2026-08-06T10:00:00Z"),
+    },
+    // 14. Custom Engraved Brass Wall Plaque (Made to order)
+    {
+      name: "Custom Engraved Brass Wall Plaque",
+      slug: "custom-brass-wall-plaque",
+      description: "Personalized solid brass wall plaque hand-hammered and custom-engraved with your chosen family name or calligraphy.",
+      categoryId: catBrass._id,
+      status: "ACTIVE",
+      fulfillmentType: "MADE_TO_ORDER",
+      basePriceAmount: 150000, // EGP 1,500.00
+      currency: "EGP",
+      materials: ["Solid Brass"],
+      colors: ["Brass", "Gold"],
+      tags: ["brass", "plaque", "decor", "calligraphy"],
+      personalizationAvailable: true,
+      personalizationInstructions: "Provide the name or text you wish to have engraved in Arabic calligraphy.",
+      preparationDaysMin: 7,
+      preparationDaysMax: 14,
+      images: [
+        {
+          url: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?q=80&w=800",
+          publicId: "brass-plaque-1",
+          width: 800,
+          height: 1000,
+        },
+      ],
+      variants: [
+        {
+          sku: "PLQ-BRS-CUST",
+          label: "Standard 30cm Plaque",
+          optionValues: new Map([["size", "Standard"]]),
+          isActive: true,
+        },
+      ],
+      isFeatured: false,
+      publishedAt: new Date("2026-08-06T11:00:00Z"),
+    },
+    // 15. Personalized Crochet Stuffed Bunny (Made to order)
+    {
+      name: "Personalized Crochet Stuffed Bunny",
+      slug: "personalized-crochet-bunny",
+      description: "A soft, hand-crocheted toy rabbit made of pure organic cotton warp and hypoallergenic fiberfill. Custom name tag available.",
+      categoryId: catToys._id,
+      status: "ACTIVE",
+      fulfillmentType: "MADE_TO_ORDER",
+      basePriceAmount: 38000, // EGP 380.00
+      currency: "EGP",
+      materials: ["Organic Cotton Yarn", "Fiberfill Stuffing"],
+      colors: ["Cream", "Pink", "Blue"],
+      tags: ["toy", "crochet", "bunny", "gift"],
+      personalizationAvailable: true,
+      personalizationInstructions: "Provide a name to embroider on the bunny's customizable collar tag.",
+      preparationDaysMin: 3,
+      preparationDaysMax: 7,
+      images: [
+        {
+          url: "https://images.unsplash.com/photo-1580600301354-17c8053813f8?q=80&w=800",
+          publicId: "crochet-bunny-1",
+          width: 800,
+          height: 1000,
+        },
+      ],
+      variants: [
+        {
+          sku: "TOY-BUN-CUST",
+          label: "Crochet Bunny",
+          optionValues: new Map([["size", "Standard"]]),
+          isActive: true,
+        },
+      ],
+      isFeatured: false,
+      publishedAt: new Date("2026-08-06T12:00:00Z"),
     },
   ]);
 
