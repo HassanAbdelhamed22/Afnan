@@ -15,9 +15,9 @@ async function main() {
     {
       name: "Clay Pots",
       slug: "clay-pots",
-      description: "Beautiful hand-painted clay pots from Aswan",
+      description: "Beautiful hand-painted clay pots and ceramic planters crafted in Egypt.",
       image: {
-        url: "https://res.cloudinary.com/demo/image/upload/v1620000000/clay-pots.jpg",
+        url: "https://images.unsplash.com/photo-1576016770956-debb63d90029?q=80&w=800",
         publicId: "clay-pots-main",
         width: 800,
         height: 1000,
@@ -28,9 +28,9 @@ async function main() {
     {
       name: "Crochet Shawls",
       slug: "crochet-shawls",
-      description: "Warm, hand-woven Egyptian wool shawls",
+      description: "Warm, hand-woven Egyptian wool shawls and scarves.",
       image: {
-        url: "https://res.cloudinary.com/demo/image/upload/v1620000000/shawls.jpg",
+        url: "https://images.unsplash.com/photo-1584992236310-6edddc08acff?q=80&w=800",
         publicId: "shawls-main",
         width: 800,
         height: 1000,
@@ -41,9 +41,9 @@ async function main() {
     {
       name: "Leather Bags",
       slug: "leather-bags",
-      description: "Genuine camel and cow leather hand-stitched bags",
+      description: "Genuine camel and cow leather hand-stitched bags and accessories.",
       image: {
-        url: "https://res.cloudinary.com/demo/image/upload/v1620000000/leather-bags.jpg",
+        url: "https://images.unsplash.com/photo-1547949003-9792a18a2601?q=80&w=800",
         publicId: "leather-bags-main",
         width: 800,
         height: 1000,
@@ -52,19 +52,66 @@ async function main() {
       isActive: true,
     },
     {
+      name: "Handwoven Rugs",
+      slug: "handwoven-rugs",
+      description: "Premium wool Kilims and woven tapestries from Fayoum and Upper Egypt.",
+      image: {
+        url: "https://images.unsplash.com/photo-1579656381226-5fc0f0100c3b?q=80&w=800",
+        publicId: "rugs-main",
+        width: 800,
+        height: 1000,
+      },
+      sortOrder: 4,
+      isActive: true,
+    },
+    {
+      name: "Brass Decor",
+      slug: "brass-decor",
+      description: "Hand-engraved brass trays, lanterns, and ornaments from historic Cairo.",
+      image: {
+        url: "https://images.unsplash.com/photo-1618220179428-22790b461013?q=80&w=800",
+        publicId: "brass-main",
+        width: 800,
+        height: 1000,
+      },
+      sortOrder: 5,
+      isActive: true,
+    },
+    {
+      name: "Crochet Toys",
+      slug: "crochet-toys",
+      description: "Soft crochet toys and teddy bears hand-knitted with organic cotton.",
+      image: {
+        url: "https://images.unsplash.com/photo-1559251606-c623743a6d76?q=80&w=800",
+        publicId: "crochet-bear-main",
+        width: 800,
+        height: 1000,
+      },
+      sortOrder: 6,
+      isActive: true,
+    },
+    {
       name: "Seasonal Specials",
       slug: "seasonal-specials",
       description: "Hidden or inactive category for testing",
-      sortOrder: 4,
+      sortOrder: 7,
       isActive: false, // Inactive category
     },
   ]);
 
-  const [catClay, catCrochet, catLeather, catInactive] = categories;
+  const [
+    catClay,
+    catCrochet,
+    catLeather,
+    catRugs,
+    catBrass,
+    catToys,
+    catInactive,
+  ] = categories;
 
   console.log("Seeding products...");
   await ProductModel.create([
-    // Active Ready-made product with stock
+    // 1. Classic Blue Aswan Pot
     {
       name: "Classic Blue Aswan Pot",
       slug: "classic-blue-aswan-pot",
@@ -81,7 +128,7 @@ async function main() {
       personalizationAvailable: false,
       images: [
         {
-          url: "https://res.cloudinary.com/demo/image/upload/v1620000000/aswan-pot-1.jpg",
+          url: "https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c?q=80&w=800",
           publicId: "aswan-pot-1",
           width: 800,
           height: 1000,
@@ -112,20 +159,48 @@ async function main() {
           stockQuantity: 0, // Out of stock variant
           isActive: true,
         },
-        {
-          sku: "POT-BLU-XL",
-          label: "Extra Large (30cm)",
-          optionValues: new Map([["size", "Extra Large"]]),
-          priceAmount: 40000,
-          stockQuantity: 2,
-          isActive: false, // Inactive variant (should be hidden)
-        },
       ],
       isFeatured: true,
       publishedAt: new Date("2026-08-01T12:00:00Z"),
     },
 
-    // Active Made-to-Order product with preparation time
+    // 2. Terracotta Clay Planter
+    {
+      name: "Terracotta Clay Planter",
+      slug: "terracotta-clay-planter",
+      description: "Naturally porous terracotta planter designed for healthy root aeration. Sourced from Fayoum workshops.",
+      categoryId: catClay._id,
+      status: "ACTIVE",
+      fulfillmentType: "READY_MADE",
+      basePriceAmount: 15000, // EGP 150.00
+      currency: "EGP",
+      materials: ["Terracotta Clay"],
+      colors: ["Terracotta", "Brown"],
+      tags: ["planter", "clay", "fayoum"],
+      dimensions: { width: 18, height: 18, depth: 18, unit: "cm" },
+      personalizationAvailable: false,
+      images: [
+        {
+          url: "https://images.unsplash.com/photo-1581514781448-912a76f272a8?q=80&w=800",
+          publicId: "terracotta-pot-1",
+          width: 800,
+          height: 1000,
+        },
+      ],
+      variants: [
+        {
+          sku: "POT-TER-STD",
+          label: "Standard",
+          optionValues: new Map([["size", "Standard"]]),
+          stockQuantity: 15,
+          isActive: true,
+        },
+      ],
+      isFeatured: false,
+      publishedAt: new Date("2026-08-01T14:00:00Z"),
+    },
+
+    // 3. Custom Crochet Wool Shawl
     {
       name: "Custom Crochet Wool Shawl",
       slug: "custom-crochet-wool-shawl",
@@ -145,7 +220,7 @@ async function main() {
       careInstructions: "Hand wash cold only. Lay flat to dry.",
       images: [
         {
-          url: "https://res.cloudinary.com/demo/image/upload/v1620000000/shawl-custom.jpg",
+          url: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=800",
           publicId: "shawl-custom-1",
           width: 800,
           height: 1000,
@@ -156,7 +231,7 @@ async function main() {
           sku: "SHW-CUST-ONEM",
           label: "Standard Size (1.5m)",
           optionValues: new Map([["length", "Standard"]]),
-          stockQuantity: undefined, // Made to order doesn't expose stock
+          stockQuantity: undefined,
           isActive: true,
         },
       ],
@@ -164,7 +239,42 @@ async function main() {
       publishedAt: new Date("2026-08-02T10:00:00Z"),
     },
 
-    // Active Ready-made product (Leather Bag)
+    // 4. Handknit Lace Wool Scarf
+    {
+      name: "Handknit Lace Wool Scarf",
+      slug: "handknit-lace-wool-scarf",
+      description: "Delicate lace-patterned scarf handknit with premium Egyptian wool. Cozy yet lightweight.",
+      categoryId: catCrochet._id,
+      status: "ACTIVE",
+      fulfillmentType: "READY_MADE",
+      basePriceAmount: 35000, // EGP 350.00
+      currency: "EGP",
+      materials: ["Egyptian Wool"],
+      colors: ["Cream", "Ivory"],
+      tags: ["scarf", "wool", "lace", "knit"],
+      personalizationAvailable: false,
+      images: [
+        {
+          url: "https://images.unsplash.com/photo-1528642474498-1af0c17fd8c3?q=80&w=800",
+          publicId: "lace-scarf-1",
+          width: 800,
+          height: 1000,
+        },
+      ],
+      variants: [
+        {
+          sku: "SCF-LAC-CRM",
+          label: "Cream Scarf",
+          optionValues: new Map([["color", "Cream"]]),
+          stockQuantity: 4,
+          isActive: true,
+        },
+      ],
+      isFeatured: false,
+      publishedAt: new Date("2026-08-02T15:00:00Z"),
+    },
+
+    // 5. Vintage Nubian Leather Messenger Bag
     {
       name: "Vintage Nubian Leather Messenger Bag",
       slug: "vintage-nubian-leather-messenger-bag",
@@ -181,7 +291,7 @@ async function main() {
       personalizationAvailable: false,
       images: [
         {
-          url: "https://res.cloudinary.com/demo/image/upload/v1620000000/leather-bag-1.jpg",
+          url: "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?q=80&w=800",
           publicId: "leather-bag-1",
           width: 800,
           height: 1000,
@@ -205,6 +315,270 @@ async function main() {
       ],
       isFeatured: false,
       publishedAt: new Date("2026-08-03T09:00:00Z"),
+    },
+
+    // 6. Nubian Pattern Leather Tote
+    {
+      name: "Nubian Pattern Leather Tote",
+      slug: "nubian-pattern-leather-tote",
+      description: "Wide-mouth camel leather shopping tote adorned with custom geometric Nubian brand embossments.",
+      categoryId: catLeather._id,
+      status: "ACTIVE",
+      fulfillmentType: "READY_MADE",
+      basePriceAmount: 95000, // EGP 950.00
+      currency: "EGP",
+      materials: ["Camel Leather"],
+      colors: ["Tan Brown"],
+      tags: ["leather", "tote", "bag", "nubian"],
+      dimensions: { width: 35, height: 40, depth: 10, unit: "cm" },
+      personalizationAvailable: false,
+      images: [
+        {
+          url: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=800",
+          publicId: "leather-tote-1",
+          width: 800,
+          height: 1000,
+        },
+      ],
+      variants: [
+        {
+          sku: "BAG-TOTE-TAN",
+          label: "Tan Tote",
+          optionValues: new Map([["color", "Tan"]]),
+          stockQuantity: 6,
+          isActive: true,
+        },
+      ],
+      isFeatured: true,
+      publishedAt: new Date("2026-08-03T14:00:00Z"),
+    },
+
+    // 7. Minimalist Leather Card Holder
+    {
+      name: "Minimalist Leather Card Holder",
+      slug: "minimalist-leather-card-holder",
+      description: "Stitched by hand with pure linen thread. Features 4 card slots and a center cash pocket.",
+      categoryId: catLeather._id,
+      status: "ACTIVE",
+      fulfillmentType: "READY_MADE",
+      basePriceAmount: 18000, // EGP 180.00
+      currency: "EGP",
+      materials: ["Camel Leather", "Linen Thread"],
+      colors: ["Tan Brown", "Black"],
+      tags: ["leather", "card-holder", "minimalist"],
+      dimensions: { width: 10, height: 7, depth: 0.5, unit: "cm" },
+      personalizationAvailable: true,
+      personalizationInstructions: "Input your monogram initials (max 3 characters) to engrave.",
+      images: [
+        {
+          url: "https://images.unsplash.com/photo-1627123424574-724758594e93?q=80&w=800",
+          publicId: "card-holder-1",
+          width: 800,
+          height: 1000,
+        },
+      ],
+      variants: [
+        {
+          sku: "CRD-TAN",
+          label: "Tan Brown",
+          optionValues: new Map([["color", "Tan"]]),
+          stockQuantity: 12,
+          isActive: true,
+        },
+        {
+          sku: "CRD-BLK",
+          label: "Matte Black",
+          optionValues: new Map([["color", "Black"]]),
+          stockQuantity: 8,
+          isActive: true,
+        },
+      ],
+      isFeatured: false,
+      publishedAt: new Date("2026-08-03T16:00:00Z"),
+    },
+
+    // 8. Fayoum Kilim Rug
+    {
+      name: "Fayoum Kilim Rug",
+      slug: "fayoum-kilim-rug",
+      description: "Stunning hand-woven wool Kilim rug showcasing iconic Fayoum desert geometric motifs.",
+      categoryId: catRugs._id,
+      status: "ACTIVE",
+      fulfillmentType: "READY_MADE",
+      basePriceAmount: 180000, // EGP 1,800.00
+      currency: "EGP",
+      materials: ["Egyptian Wool", "Organic Cotton Warp"],
+      colors: ["Orange", "Terracotta", "Cream"],
+      tags: ["rug", "kilim", "wool", "fayoum"],
+      dimensions: { width: 120, height: 180, unit: "cm" },
+      personalizationAvailable: false,
+      images: [
+        {
+          url: "https://images.unsplash.com/photo-1600121848594-d8644e57abab?q=80&w=800",
+          publicId: "fayoum-kilim-1",
+          width: 800,
+          height: 1000,
+        },
+      ],
+      variants: [
+        {
+          sku: "RUG-KIL-FY-120",
+          label: "1.2m x 1.8m",
+          optionValues: new Map([["dimensions", "1.2m x 1.8m"]]),
+          stockQuantity: 2,
+          isActive: true,
+        },
+      ],
+      isFeatured: true,
+      publishedAt: new Date("2026-08-04T10:00:00Z"),
+    },
+
+    // 9. Cairo Wool Tapestry
+    {
+      name: "Cairo Wool Tapestry",
+      slug: "cairo-wool-tapestry",
+      description: "Fine wool tapestry handwoven on traditional vertical looms. Depicts local Nile delta landscapes.",
+      categoryId: catRugs._id,
+      status: "ACTIVE",
+      fulfillmentType: "MADE_TO_ORDER",
+      basePriceAmount: 220000, // EGP 2,200.00
+      currency: "EGP",
+      materials: ["Egyptian Wool", "Linen Warp"],
+      colors: ["Blue", "Green", "Ochre"],
+      tags: ["tapestry", "wall-art", "wool", "cairo"],
+      dimensions: { width: 80, height: 120, unit: "cm" },
+      personalizationAvailable: false,
+      preparationDaysMin: 14,
+      preparationDaysMax: 21,
+      images: [
+        {
+          url: "https://images.unsplash.com/photo-1554034483-04fda0d3507b?q=80&w=800",
+          publicId: "cairo-tapestry-1",
+          width: 800,
+          height: 1000,
+        },
+      ],
+      variants: [
+        {
+          sku: "TAP-CAI-80",
+          label: "Standard (80cm x 120cm)",
+          optionValues: new Map([["size", "Standard"]]),
+          stockQuantity: undefined,
+          isActive: true,
+        },
+      ],
+      isFeatured: false,
+      publishedAt: new Date("2026-08-04T12:00:00Z"),
+    },
+
+    // 10. Hand-Engraved Brass Tray
+    {
+      name: "Hand-Engraved Brass Tray",
+      slug: "hand-engraved-brass-tray",
+      description: "Ornate coffee serving tray in solid brass, carefully hammered and hand-etched with historic Islamic motifs.",
+      categoryId: catBrass._id,
+      status: "ACTIVE",
+      fulfillmentType: "READY_MADE",
+      basePriceAmount: 120000, // EGP 1,200.00
+      currency: "EGP",
+      materials: ["Solid Brass"],
+      colors: ["Gold", "Brass"],
+      tags: ["brass", "tray", "decor", "serving"],
+      dimensions: { width: 45, height: 45, depth: 2, unit: "cm" },
+      personalizationAvailable: true,
+      personalizationInstructions: "Specify name or date to hand-engrave at the center.",
+      images: [
+        {
+          url: "https://images.unsplash.com/photo-1543007630-9710e4a00a20?q=80&w=800",
+          publicId: "brass-tray-1",
+          width: 800,
+          height: 1000,
+        },
+      ],
+      variants: [
+        {
+          sku: "BRS-TRY-45",
+          label: "45cm Diameter",
+          optionValues: new Map([["diameter", "45cm"]]),
+          stockQuantity: 5,
+          isActive: true,
+        },
+      ],
+      isFeatured: false,
+      publishedAt: new Date("2026-08-05T09:00:00Z"),
+    },
+
+    // 11. Al-Muizz Lantern
+    {
+      name: "Al-Muizz Lantern",
+      slug: "al-muizz-lantern",
+      description: "Pierced brass tabletop lantern casting traditional stellar shadow projections.",
+      categoryId: catBrass._id,
+      status: "ACTIVE",
+      fulfillmentType: "READY_MADE",
+      basePriceAmount: 85000, // EGP 850.00
+      currency: "EGP",
+      materials: ["Brass", "Glass Inserts"],
+      colors: ["Brass", "Amber"],
+      tags: ["lantern", "lighting", "brass", "al-muizz"],
+      dimensions: { width: 20, height: 35, depth: 20, unit: "cm" },
+      personalizationAvailable: false,
+      images: [
+        {
+          url: "https://images.unsplash.com/photo-1517999144091-3d9dca6d1e43?q=80&w=800",
+          publicId: "muizz-lantern-1",
+          width: 800,
+          height: 1000,
+        },
+      ],
+      variants: [
+        {
+          sku: "BRS-LNT-MUI",
+          label: "Standard",
+          optionValues: new Map([["model", "Standard"]]),
+          stockQuantity: 8,
+          isActive: true,
+        },
+      ],
+      isFeatured: true,
+      publishedAt: new Date("2026-08-05T11:00:00Z"),
+    },
+
+    // 12. Handmade Crochet Bear
+    {
+      name: "Handmade Crochet Bear",
+      slug: "handmade-crochet-bear",
+      description: "Adorable soft teddy bear hand-knitted from hypoallergenic organic cotton yarns. Perfect gift for children.",
+      categoryId: catToys._id,
+      status: "ACTIVE",
+      fulfillmentType: "READY_MADE",
+      basePriceAmount: 29000, // EGP 290.00
+      currency: "EGP",
+      materials: ["Organic Cotton Yarn", "Fiberfill Stuffing"],
+      colors: ["Grey", "Purple"],
+      tags: ["toy", "crochet", "bear", "gift"],
+      dimensions: { width: 12, height: 25, depth: 10, unit: "cm" },
+      personalizationAvailable: true,
+      personalizationInstructions: "Provide a name (up to 8 characters) to embroider on the vest.",
+      images: [
+        {
+          url: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=800",
+          publicId: "crochet-bear-1",
+          width: 800,
+          height: 1000,
+        },
+      ],
+      variants: [
+        {
+          sku: "TOY-BEAR-GRY",
+          label: "Grey Crochet Bear",
+          optionValues: new Map([["color", "Grey"]]),
+          stockQuantity: 7,
+          isActive: true,
+        },
+      ],
+      isFeatured: true,
+      publishedAt: new Date("2026-08-06T09:00:00Z"),
     },
 
     // Inactive Category Product: ACTIVE product, but under INACTIVE category (should be hidden publicly)
