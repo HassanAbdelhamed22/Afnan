@@ -445,3 +445,31 @@ export async function listCatalogProducts(
     totalPages: Math.ceil(total / parsed.limit),
   };
 }
+
+export async function getAvailableFilterMetadata(): Promise<{
+  materials: string[];
+  colors: string[];
+}> {
+  await connectMongoose();
+
+  const activeCategories = await CategoryModel.find({ isActive: true })
+    .select("_id")
+    .lean();
+  const activeCategoryIds = activeCategories.map((c) => c._id);
+
+  const query = {
+    status: "ACTIVE",
+    categoryId: { $in: activeCategoryIds },
+  };
+
+  const [materials, colors] = await Promise.all([
+    ProductModel.distinct("materials", query),
+    ProductModel.distinct("colors", query),
+  ]);
+
+  return {
+    materials: (materials as string[]).filter(Boolean).sort(),
+    colors: (colors as string[]).filter(Boolean).sort(),
+  };
+}
+

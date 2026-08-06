@@ -7,6 +7,7 @@ import {
   rawGetProductBySlug,
   rawGetCategoryBySlug,
   listCatalogProducts,
+  getAvailableFilterMetadata,
 } from "../../modules/catalog/queries";
 import mongoose from "mongoose";
 import { NotFoundError } from "../../lib/errors/app-error";
@@ -186,4 +187,56 @@ describe("Catalog Queries Integration Tests", () => {
     // Text index search requires building the text index, but we can verify it doesn't crash
     expect(p4).toBeDefined();
   }, 15000);
+
+  it("should retrieve sorted list of unique active materials and colors", async () => {
+    const activeCat = await CategoryModel.create({
+      name: "Bags",
+      slug: "bags",
+      sortOrder: 1,
+      isActive: true,
+    });
+
+    await ProductModel.create([
+      {
+        name: "Prod 1",
+        slug: "prod-1",
+        description: "Desc",
+        categoryId: activeCat._id,
+        status: "ACTIVE",
+        fulfillmentType: "MADE_TO_ORDER",
+        basePriceAmount: 1000,
+        materials: ["Wool", "Leather"],
+        colors: ["Red", "Blue"],
+        personalizationAvailable: false,
+      },
+      {
+        name: "Prod 2",
+        slug: "prod-2",
+        description: "Desc",
+        categoryId: activeCat._id,
+        status: "ACTIVE",
+        fulfillmentType: "MADE_TO_ORDER",
+        basePriceAmount: 1500,
+        materials: ["Leather", "Brass"],
+        colors: ["Blue", "Gold"],
+        personalizationAvailable: false,
+      },
+      {
+        name: "Inactive Prod",
+        slug: "inactive-prod",
+        description: "Desc",
+        categoryId: activeCat._id,
+        status: "DRAFT",
+        fulfillmentType: "MADE_TO_ORDER",
+        basePriceAmount: 1200,
+        materials: ["Silver"],
+        colors: ["Grey"],
+        personalizationAvailable: false,
+      },
+    ]);
+
+    const metadata = await getAvailableFilterMetadata();
+    expect(metadata.materials).toEqual(["Brass", "Leather", "Wool"]);
+    expect(metadata.colors).toEqual(["Blue", "Gold", "Red"]);
+  });
 });
