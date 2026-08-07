@@ -1,12 +1,13 @@
 import type { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://afnan.eg";
   return {
     rules: {
       userAgent: "*",
       allow: "/",
       disallow: "/admin/",
     },
-    sitemap: "https://afnan.eg/sitemap.xml",
+    sitemap: `${appUrl}/sitemap.xml`,
   };
 }
