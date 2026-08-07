@@ -148,31 +148,7 @@ If a slug is missing, inactive, or draft, the layer raises a custom `NotFoundErr
 
 ## 5. Storefront Caching & Invalidation Strategy
 
-Public reads that are highly static are cached using Next.js `unstable_cache` to bypass database hits.
+Public reads that are highly static are cached using Next.js `unstable_cache` to bypass database hits and optimize response times.
 
-### 5.1 Cache Distribution Map
+For a complete breakdown of caching taxonomy, dynamic tag resolution (the Metadata Resolver Pattern), lifetime configuration (TTLs), eviction helpers, and testing, please refer to the dedicated [caching-architecture.md](file:///d:/JS/Next.js/Afnan/docs/caching-architecture.md) documentation.
 
-| Query Function | Cache Key | Tags | Invalidation Trigger |
-|---|---|---|---|
-| `getCategoryNavigation()` | `["category-navigation"]` | `["categories"]` | Category creation, modification, or deletion. |
-| `getFeaturedProducts(limit)` | `["featured-products", limit]` | `["home"]` | Featured status change, product creation, category updates. |
-| `getCategoryBySlug(slug)` | `["category-by-slug", slug]` | `["category:${slug}"]` | Category modification. |
-| `getProductBySlug(slug)` | `["product-by-slug", slug]` | `["product:${slug}"]` | Product writes, stock updates, variant edits. |
-
-*Note: The dynamic catalog search listing (`listCatalogProducts`) is **not cached** to prevent cache bloat from unbounded filter combinations.*
-
-### 5.2 Programmatic Revalidation
-When writing to the database in Server Actions or admin routes, developers must invalidate the corresponding tags:
-```typescript
-import { revalidateTag } from "next/cache";
-
-// On product edit:
-revalidateTag("home");
-revalidateTag("products");
-revalidateTag(`product:${slug}`);
-
-// On category edit:
-revalidateTag("home");
-revalidateTag("categories");
-revalidateTag(`category:${slug}`);
-```
