@@ -20,6 +20,7 @@ interface ShopCatalogProps {
   totalPages: number;
   activeCategorySlug?: string;
   categoryName?: string;
+  categoryDescription?: string;
 }
 
 export function ShopCatalog({
@@ -32,6 +33,7 @@ export function ShopCatalog({
   totalPages,
   activeCategorySlug,
   categoryName,
+  categoryDescription,
 }: ShopCatalogProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -40,12 +42,12 @@ export function ShopCatalog({
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = React.useState(false);
 
   // Read current filter state from URL
-  const activeSort = searchParams.get("sort") || "newest";
+  const activeSearch = searchParams.get("search") || "";
+  const activeSort = searchParams.get("sort") || (activeSearch ? "relevance" : "newest");
   const activeMaterial = searchParams.get("material") || "";
   const activeColor = searchParams.get("color") || "";
   const activeFulfillment = searchParams.get("fulfillment") || "";
   const activeAvailability = searchParams.get("availability") || "";
-  const activeSearch = searchParams.get("search") || "";
 
   // Local refs for prices (to avoid layout updates while typing and Eslint cascading triggers)
   const minPriceRef = React.useRef<HTMLInputElement>(null);
@@ -85,6 +87,16 @@ export function ShopCatalog({
       maxPrice: maxPriceRef.current?.value || null,
     });
   }, [updateQuery]);
+
+  const handlePriceKeyDown = React.useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handlePriceApply();
+      }
+    },
+    [handlePriceApply]
+  );
 
   const handleClearAll = React.useCallback(() => {
     router.push(pathname);
@@ -238,6 +250,7 @@ export function ShopCatalog({
                 key={`min-${searchParams.get("minPrice") || ""}`}
                 type="number"
                 defaultValue={searchParams.get("minPrice") || ""}
+                onKeyDown={handlePriceKeyDown}
                 placeholder="0"
                 className="w-full border-b border-outline-variant bg-transparent py-1.5 text-sm text-on-background focus:border-primary outline-none transition-colors"
               />
@@ -252,6 +265,7 @@ export function ShopCatalog({
                 key={`max-${searchParams.get("maxPrice") || ""}`}
                 type="number"
                 defaultValue={searchParams.get("maxPrice") || ""}
+                onKeyDown={handlePriceKeyDown}
                 placeholder="Any"
                 className="w-full border-b border-outline-variant bg-transparent py-1.5 text-sm text-on-background focus:border-primary outline-none transition-colors"
               />
@@ -330,13 +344,18 @@ export function ShopCatalog({
       <header className="border-b border-outline-variant bg-surface py-12 sm:py-16">
         <div className="mx-auto max-w-[100rem] px-5 sm:px-8 lg:px-12">
           {activeCategorySlug ? (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 max-w-3xl">
               <span className="font-sans text-[0.625rem] font-bold uppercase tracking-[0.2em] text-on-surface-variant">
                 Collection
               </span>
               <h1 className="font-serif text-[clamp(2.5rem,5vw,4.5rem)] leading-none tracking-[-0.035em] text-on-background">
                 {categoryName}
               </h1>
+              {categoryDescription && (
+                <p className="mt-2 font-sans text-sm leading-relaxed text-on-surface-variant font-medium">
+                  {categoryDescription}
+                </p>
+              )}
             </div>
           ) : (
             <div className="flex flex-col gap-2">
@@ -387,6 +406,7 @@ export function ShopCatalog({
                     onChange={(e) => updateQuery({ sort: e.target.value })}
                     className="border-none bg-transparent py-1 font-sans text-xs text-on-background outline-none cursor-pointer focus:ring-0 focus-visible:ring-0 pr-4"
                   >
+                    {activeSearch && <option value="relevance">Relevance</option>}
                     <option value="newest">New arrivals</option>
                     <option value="price_asc">Price: Low to High</option>
                     <option value="price_desc">Price: High to Low</option>
