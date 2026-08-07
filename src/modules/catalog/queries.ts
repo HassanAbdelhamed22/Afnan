@@ -1,6 +1,6 @@
 import "server-only";
 
-import { unstable_cache } from "next/cache";
+import { unstable_cache, updateTag } from "next/cache";
 import { connectMongoose } from "@/lib/mongoose";
 import { NotFoundError } from "@/lib/errors/app-error";
 import { CategoryModel } from "../categories/model";
@@ -262,35 +262,153 @@ export async function rawGetCategoryBySlug(slug: string): Promise<CategoryDTO> {
   return mapCategoryToDTO(category);
 }
 
+export async function rawGetProductMetadataBySlug(slug: string): Promise<{ id: string; categoryId: string }> {
+  await connectMongoose();
+  const product = await ProductModel.findOne({ slug, status: "ACTIVE" })
+    .select("_id categoryId")
+    .lean();
+
+  if (!product) {
+    throw new NotFoundError("Product not found");
+  }
+
+  const categoryIdStr = typeof product.categoryId === "string" 
+    ? product.categoryId 
+    : (product.categoryId as { toString(): string }).toString();
+
+  return {
+    id: product._id.toString(),
+    categoryId: categoryIdStr,
+  };
+}
+
+export async function getProductMetadataBySlug(slug: string): Promise<{ id: string; categoryId: string }> {
+  return unstable_cache(
+    async (s: string) => rawGetProductMetadataBySlug(s),
+    ["product-metadata-by-slug", slug],
+    {
+      tags: [CACHE_TAGS.product(slug)],
+      revalidate: 3600
+    }
+  )(slug);
+}
+
+export async function rawGetCategoryMetadataBySlug(slug: string): Promise<{ id: string }> {
+  await connectMongoose();
+  const category = await CategoryModel.findOne({ slug, isActive: true })
+    .select("_id")
+    .lean();
+
+  if (!category) {
+    throw new NotFoundError("Category not found");
+  }
+
+  return {
+    id: category._id.toString(),
+  };
+}
+
+export async function getCategoryMetadataBySlug(slug: string): Promise<{ id: string }> {
+  return unstable_cache(
+    async (s: string) => rawGetCategoryMetadataBySlug(s),
+    ["category-metadata-by-slug", slug],
+    {
+      tags: [CACHE_TAGS.category(slug)],
+      revalidate: 3600
+    }
+  )(slug);
+}
+
 export const getCategoryNavigation = unstable_cache(
   async () => rawGetCategoryNavigation(),
   ["category-navigation-v2"],
-  { tags: [CACHE_TAGS.categories] }
+  {
+    tags: [CACHE_TAGS.categories],
+    revalidate: 86400
+  }
 );
+
+export async function getHomepageCatalog(limit = 4): Promise<ProductCardDTO[]> {
+  const resolvedLimit = Math.min(50, Math.max(1, limit));
+  return unstable_cache(
+    async (l: number) => rawGetFeaturedProducts(l),
+    ["homepage-catalog", String(resolvedLimit)],
+    {
+      tags: [CACHE_TAGS.home, CACHE_TAGS.products, CACHE_TAGS.categories],
+      revalidate: 3600
+    }
+  )(resolvedLimit);
+}
 
 export async function getFeaturedProducts(limit = 8): Promise<ProductCardDTO[]> {
   const resolvedLimit = Math.min(50, Math.max(1, limit));
   return unstable_cache(
     async (l: number) => rawGetFeaturedProducts(l),
     ["featured-products", String(resolvedLimit)],
-    { tags: [CACHE_TAGS.home] }
+    {
+      tags: [CACHE_TAGS.home],
+      revalidate: 3600
+    }
   )(resolvedLimit);
 }
 
 export async function getProductBySlug(slug: string): Promise<ProductDetailDTO> {
+  const meta = await getProductMetadataBySlug(slug);
   return unstable_cache(
     async (s: string) => rawGetProductBySlug(s),
     ["product-by-slug", slug],
-    { tags: [CACHE_TAGS.product(slug)] }
+    {
+      tags: [
+        CACHE_TAGS.product(meta.id),
+        CACHE_TAGS.product(slug),
+        CACHE_TAGS.products,
+        CACHE_TAGS.category(meta.categoryId)
+      ],
+      revalidate: 3600
+    }
   )(slug);
 }
 
 export async function getCategoryBySlug(slug: string): Promise<CategoryDTO> {
+  const meta = await getCategoryMetadataBySlug(slug);
   return unstable_cache(
     async (s: string) => rawGetCategoryBySlug(s),
     ["category-by-slug", slug],
-    { tags: [CACHE_TAGS.category(slug)] }
+    {
+      tags: [
+        CACHE_TAGS.category(meta.id),
+        CACHE_TAGS.category(slug),
+        CACHE_TAGS.categories
+      ],
+      revalidate: 3600
+    }
   )(slug);
+}
+
+// --- Cache Invalidation Helpers ---
+
+export function revalidateCatalogCache() {
+  updateTag(CACHE_TAGS.home);
+  updateTag(CACHE_TAGS.products);
+}
+
+export function revalidateProductCache(id: string, slug?: string) {
+  updateTag(CACHE_TAGS.product(id));
+  if (slug) {
+    updateTag(CACHE_TAGS.product(slug));
+  }
+  updateTag(CACHE_TAGS.products);
+  updateTag(CACHE_TAGS.home);
+}
+
+export function revalidateCategoryCache(id: string, slug?: string) {
+  updateTag(CACHE_TAGS.category(id));
+  if (slug) {
+    updateTag(CACHE_TAGS.category(slug));
+  }
+  updateTag(CACHE_TAGS.categories);
+  updateTag(CACHE_TAGS.products);
+  updateTag(CACHE_TAGS.home);
 }
 
 // --- Non-Cached / Dynamic Queries ---
@@ -410,16 +528,16 @@ export async function listCatalogProducts(
     query.$text = { $search: parsed.search };
   }
 
-  let sortQuery: Record<string, 1 | -1 | { $meta: string }> = { publishedAt: -1, createdAt: -1 };
+  let sortQuery: Record<string, 1 | -1 | { $meta: string }> = { publishedAt: -1, createdAt: -1, _id: 1 };
 
   if (parsed.sort === "price_asc") {
-    sortQuery = { basePriceAmount: 1 };
+    sortQuery = { basePriceAmount: 1, _id: 1 };
   } else if (parsed.sort === "price_desc") {
-    sortQuery = { basePriceAmount: -1 };
+    sortQuery = { basePriceAmount: -1, _id: 1 };
   } else if (parsed.sort === "newest") {
-    sortQuery = { publishedAt: -1, createdAt: -1 };
-  } else if (parsed.search && !parsed.sort) {
-    sortQuery = { score: { $meta: "textScore" } };
+    sortQuery = { publishedAt: -1, createdAt: -1, _id: 1 };
+  } else if (parsed.sort === "relevance" || (parsed.search && !parsed.sort)) {
+    sortQuery = { score: { $meta: "textScore" }, _id: 1 };
   }
 
   const skip = (parsed.page - 1) * parsed.limit;
@@ -446,16 +564,14 @@ export async function listCatalogProducts(
   };
 }
 
-export async function getAvailableFilterMetadata(): Promise<{
+export async function rawGetAvailableFilterMetadata(): Promise<{
   materials: string[];
   colors: string[];
 }> {
   await connectMongoose();
 
-  const activeCategories = await CategoryModel.find({ isActive: true })
-    .select("_id")
-    .lean();
-  const activeCategoryIds = activeCategories.map((c) => c._id);
+  const activeCategories = await rawGetCategoryNavigation();
+  const activeCategoryIds = activeCategories.map((c) => c.id);
 
   const query = {
     status: "ACTIVE",
@@ -472,4 +588,13 @@ export async function getAvailableFilterMetadata(): Promise<{
     colors: (colors as string[]).filter(Boolean).sort(),
   };
 }
+
+export const getAvailableFilterMetadata = unstable_cache(
+  async () => rawGetAvailableFilterMetadata(),
+  ["available-filter-metadata"],
+  {
+    tags: [CACHE_TAGS.products],
+    revalidate: 3600
+  }
+);
 

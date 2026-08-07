@@ -1,7 +1,7 @@
 import React from "react";
 import {
   getCategoryNavigation,
-  getFeaturedProducts,
+  getHomepageCatalog,
   listCatalogProducts,
 } from "@/modules/catalog";
 import { Hero } from "@/components/home/hero";
@@ -14,9 +14,9 @@ import { TrustFaq } from "@/components/home/trust-faq";
 
 export default async function StoreHomePage() {
   // Concurrent data fetching for optimized response times
-  const [categories, featuredProducts, newArrivalsData] = await Promise.all([
+  const [categories, homepageCatalog, newArrivalsData] = await Promise.all([
     getCategoryNavigation(),
-    getFeaturedProducts(4),
+    getHomepageCatalog(4),
     listCatalogProducts({ limit: 8, sort: "newest" }),
   ]);
 
@@ -30,7 +30,7 @@ export default async function StoreHomePage() {
         <FeaturedCategories categories={categories} />
 
         {/* 3. Editor's selection */}
-        <FeaturedProducts products={featuredProducts} />
+        <FeaturedProducts products={homepageCatalog} />
 
         {/* 4. Latest additions */}
         <NewArrivals products={newArrivalsData.products} />
