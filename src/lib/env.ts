@@ -5,6 +5,31 @@ import { z } from "zod";
 
 import { getZodFieldErrors } from "@/lib/utils";
 
+import fs from "fs";
+import path from "path";
+
+if (process.env.NODE_ENV === "test" || !process.env.MONGODB_URI) {
+  try {
+    const envPath = path.resolve(process.cwd(), ".env.local");
+    if (fs.existsSync(envPath)) {
+      const content = fs.readFileSync(envPath, "utf-8");
+      content.split(/\r?\n/).forEach((line) => {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith("#")) {
+          const firstEqual = trimmed.indexOf("=");
+          if (firstEqual !== -1) {
+            const key = trimmed.slice(0, firstEqual).trim();
+            const val = trimmed.slice(firstEqual + 1).trim();
+            process.env[key] = val;
+          }
+        }
+      });
+    }
+  } catch (err) {
+    console.error("Failed to load .env.local manually:", err);
+  }
+}
+
 const envSchema = z.object({
   NODE_ENV: z
     .enum(["development", "test", "production"])

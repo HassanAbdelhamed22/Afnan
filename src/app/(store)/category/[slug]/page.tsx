@@ -1,5 +1,7 @@
 import React from "react";
 import { notFound } from "next/navigation";
+import { type Metadata } from "next";
+import { env } from "@/lib/env";
 import {
   listCatalogProducts,
   getCategoryBySlug,
@@ -19,10 +21,50 @@ interface CategoryPageProps {
     fulfillment?: string;
     availability?: string;
     search?: string;
+    q?: string;
     minPrice?: string;
     maxPrice?: string;
     page?: string;
   }>;
+}
+
+export async function generateMetadata({ params, searchParams }: CategoryPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const pParams = await searchParams;
+  const appUrl = env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+  try {
+    const category = await getCategoryBySlug(slug);
+    let title = `${category.name} — Afnan`;
+    let description = category.description || `Browse premium curated Egyptian handmade pieces in our ${category.name} collection.`;
+
+    const searchQuery = pParams.search || pParams.q;
+    if (searchQuery) {
+      title = `Search "${searchQuery}" in ${category.name} — Afnan`;
+      description = `Browse premium Egyptian handmade pieces in ${category.name} matching keyword "${searchQuery}".`;
+    }
+
+    const canonicalUrl = `${appUrl}/category/${slug}`;
+
+    return {
+      title,
+      description,
+      alternates: {
+        canonical: canonicalUrl,
+      },
+      openGraph: {
+        title,
+        description,
+        url: canonicalUrl,
+        siteName: "Afnan",
+        type: "website",
+      },
+    };
+  } catch {
+    return {
+      title: "Collection Not Found — Afnan",
+    };
+  }
 }
 
 export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
@@ -53,7 +95,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
       ? pParams.fulfillment as "READY_MADE" | "MADE_TO_ORDER"
       : undefined,
     availability: pParams.availability === "IN_STOCK" ? "IN_STOCK" as const : undefined,
-    search: pParams.search || undefined,
+    search: pParams.search || pParams.q || undefined,
     minPrice,
     maxPrice,
     page,
@@ -78,6 +120,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
       totalPages={catalogData.totalPages}
       activeCategorySlug={slug}
       categoryName={category.name}
+      categoryDescription={category.description}
     />
   );
 }

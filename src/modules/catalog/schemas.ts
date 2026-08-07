@@ -13,9 +13,10 @@ export const catalogFiltersSchema = z.object({
   search: z
     .string()
     .trim()
+    .max(100)
     .transform((val) => val.replace(/[$]/g, "")) // Escape/strip Mongo operators
     .optional(),
-  sort: z.enum(["newest", "price_asc", "price_desc"]).optional(),
+  sort: z.enum(["newest", "price_asc", "price_desc", "relevance"]).optional(),
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(12),
 });

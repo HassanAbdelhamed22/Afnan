@@ -7,7 +7,7 @@ import {
   rawGetProductBySlug,
   rawGetCategoryBySlug,
   listCatalogProducts,
-  getAvailableFilterMetadata,
+  rawGetAvailableFilterMetadata,
 } from "../../modules/catalog/queries";
 import mongoose from "mongoose";
 import { NotFoundError } from "../../lib/errors/app-error";
@@ -235,7 +235,7 @@ describe("Catalog Queries Integration Tests", () => {
       },
     ]);
 
-    const metadata = await getAvailableFilterMetadata();
+    const metadata = await rawGetAvailableFilterMetadata();
     expect(metadata.materials).toEqual(["Brass", "Leather", "Wool"]);
     expect(metadata.colors).toEqual(["Blue", "Gold", "Red"]);
   });
