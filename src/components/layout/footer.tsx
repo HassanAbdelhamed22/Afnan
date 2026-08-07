@@ -1,105 +1,88 @@
 "use client";
 
-import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+const shopLinks = [
+  ["All products", "/shop"],
+  ["Ready-made", "/shop?fulfillment=READY_MADE"],
+  ["Made-to-order", "/shop?fulfillment=MADE_TO_ORDER"],
+  ["Custom request", "/custom-request"],
+] as const;
+
+const accountLinks = [
+  ["My profile", "/account/profile"],
+  ["Orders", "/account/orders"],
+  ["Wishlist", "/wishlist"],
+  ["Addresses", "/account/addresses"],
+] as const;
+
 export function Footer() {
   const pathname = usePathname();
-  
   const isAuthPage =
     pathname === "/login" ||
     pathname === "/register" ||
     pathname === "/forgot-password" ||
-    pathname === "/reset-password" ||
     pathname?.startsWith("/reset-password");
 
-  const isAdminRoute = pathname?.startsWith("/admin");
-
-  if (isAuthPage || isAdminRoute) {
-    return null;
-  }
+  if (isAuthPage || pathname?.startsWith("/admin")) return null;
 
   return (
-    <footer className="w-full bg-surface border-t border-solid border-outline-variant py-16 text-on-surface transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
-        
-        {/* Brand & Egypt Policy Column */}
-        <div className="flex flex-col gap-4">
-          <h3 className="font-serif text-xl tracking-wide font-normal">Afnan</h3>
-          <p className="body-md text-on-surface opacity-70">
-            Egypt&apos;s dedicated platform for premium handmade products. Crafted with love, delivered to your doorstep.
-          </p>
-          <div className="mt-2 flex flex-col gap-1.5 font-sans label-caps text-xs text-on-surface opacity-60">
-            <div>Egypt Shipping Only</div>
-            <div>Cash on Delivery (COD)</div>
-            <div>EGP Currency Only</div>
+    <footer className="border-t border-white/15 bg-[#171512] text-white">
+      <div className="mx-auto max-w-[100rem] px-5 py-16 sm:px-8 sm:py-20 lg:px-12">
+        <div className="grid gap-14 lg:grid-cols-12 lg:gap-8">
+          <div className="lg:col-span-5">
+            <Link href="/" className="inline-block font-serif text-4xl text-white no-underline outline-none focus-visible:ring-2 focus-visible:ring-white">
+              Afnan
+            </Link>
+            <p className="mt-5 max-w-md font-serif text-2xl leading-snug text-white/75 sm:text-3xl">
+              Handmade pieces, shaped with patience in Egypt.
+            </p>
+            <Link
+              href="/custom-request"
+              className="group mt-8 inline-flex min-h-11 items-center gap-4 border-b border-white/50 font-sans text-[0.625rem] font-bold uppercase tracking-[0.14em] text-white no-underline outline-none transition-colors hover:border-white focus-visible:ring-2 focus-visible:ring-white"
+            >
+              Start a custom request
+              <span aria-hidden="true" className="transition-transform group-hover:translate-x-1">&rarr;</span>
+            </Link>
+          </div>
+
+          <FooterNav title="Shop" links={shopLinks} className="lg:col-span-2 lg:col-start-8" />
+          <FooterNav title="Account" links={accountLinks} className="lg:col-span-2" />
+
+          <div className="lg:col-span-2">
+            <h2 className="font-sans text-[0.625rem] font-bold uppercase tracking-[0.18em] text-white/45">We deliver</h2>
+            <ul className="mt-5 space-y-3 font-sans text-sm text-white/70">
+              <li>Across Egypt</li>
+              <li>Cash on delivery</li>
+              <li>Prices in EGP</li>
+            </ul>
           </div>
         </div>
 
-        {/* Shop Column */}
-        <div className="flex flex-col gap-4">
-          <h4 className="font-sans label-caps text-sm tracking-wider opacity-70">Shop</h4>
-          <nav className="flex flex-col gap-2 font-sans text-sm">
-            <Link href="/shop" className="hover:opacity-60 transition-opacity no-underline text-on-surface">
-              All Products
-            </Link>
-            <Link href="/custom-request" className="hover:opacity-60 transition-opacity no-underline text-on-surface">
-              Custom Orders
-            </Link>
-            <Link href="/shop?fulfillment=READY_MADE" className="hover:opacity-60 transition-opacity no-underline text-on-surface">
-              Ready-Made Items
-            </Link>
-            <Link href="/shop?fulfillment=MADE_TO_ORDER" className="hover:opacity-60 transition-opacity no-underline text-on-surface">
-              Made-to-Order Items
-            </Link>
-          </nav>
-        </div>
-
-        {/* Account Column */}
-        <div className="flex flex-col gap-4">
-          <h4 className="font-sans label-caps text-sm tracking-wider opacity-70">Customer Service</h4>
-          <nav className="flex flex-col gap-2 font-sans text-sm">
-            <Link href="/account/profile" className="hover:opacity-60 transition-opacity no-underline text-on-surface">
-              My Profile
-            </Link>
-            <Link href="/account/orders" className="hover:opacity-60 transition-opacity no-underline text-on-surface">
-              Order History
-            </Link>
-            <Link href="/account/custom-requests" className="hover:opacity-60 transition-opacity no-underline text-on-surface">
-              Handmade Requests
-            </Link>
-            <Link href="/account/addresses" className="hover:opacity-60 transition-opacity no-underline text-on-surface">
-              Shipping Addresses
-            </Link>
-          </nav>
-        </div>
-
-        {/* Contacts Column */}
-        <div className="flex flex-col gap-4">
-          <h4 className="font-sans label-caps text-sm tracking-wider opacity-70">Connect with Us</h4>
-          <p className="body-md text-on-surface opacity-70">
-            For inquiries or order issues, reach our admin instantly via WhatsApp.
-          </p>
-          <a
-            href="https://wa.me/201000000000"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center bg-primary text-on-primary font-sans label-caps text-xs py-3 px-5 hover:bg-neutral-800 transition-colors duration-300 no-underline"
-          >
-            Contact Admin
-          </a>
-        </div>
-
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 border-t border-solid border-outline-variant/60 mt-16 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs font-sans opacity-60">
-        <div>&copy; {new Date().getFullYear()} Afnan Egypt. All rights reserved.</div>
-        <div className="flex gap-6">
-          <Link href="/terms" className="no-underline text-on-surface hover:opacity-60">Terms & Conditions</Link>
-          <Link href="/privacy" className="no-underline text-on-surface hover:opacity-60">Privacy Policy</Link>
+        <div className="mt-16 flex flex-col gap-5 border-t border-white/15 pt-7 font-sans text-[0.6875rem] text-white/45 sm:flex-row sm:items-center sm:justify-between">
+          <p>&copy; {new Date().getFullYear()} Afnan Egypt. All rights reserved.</p>
+          <div className="flex flex-wrap gap-x-6 gap-y-3">
+            <Link href="/terms" className="text-white/45 no-underline outline-none hover:text-white focus-visible:ring-2 focus-visible:ring-white">Terms &amp; Conditions</Link>
+            <Link href="/privacy" className="text-white/45 no-underline outline-none hover:text-white focus-visible:ring-2 focus-visible:ring-white">Privacy Policy</Link>
+          </div>
         </div>
       </div>
     </footer>
+  );
+}
+
+function FooterNav({ title, links, className = "" }: { title: string; links: ReadonlyArray<readonly [string, string]>; className?: string }) {
+  return (
+    <nav aria-label={`${title} links`} className={className}>
+      <h2 className="font-sans text-[0.625rem] font-bold uppercase tracking-[0.18em] text-white/45">{title}</h2>
+      <ul className="mt-5 space-y-3">
+        {links.map(([label, href]) => (
+          <li key={href}>
+            <Link href={href} className="font-sans text-sm text-white/70 no-underline outline-none transition-colors hover:text-white focus-visible:ring-2 focus-visible:ring-white">{label}</Link>
+          </li>
+        ))}
+      </ul>
+    </nav>
   );
 }

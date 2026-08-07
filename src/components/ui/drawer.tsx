@@ -43,7 +43,7 @@ export function Drawer({ isOpen, onClose, title, children, className }: DrawerPr
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex justify-end" role="presentation">
+    <div className="fixed inset-0 z-100 flex justify-end" role="presentation">
       {/* Backdrop */}
       <button
         type="button"
@@ -58,7 +58,7 @@ export function Drawer({ isOpen, onClose, title, children, className }: DrawerPr
         aria-labelledby={title ? titleId : undefined}
         aria-label={title ? undefined : "Drawer"}
         className={cn(
-          "relative z-10 flex h-[100dvh] w-[min(88vw,24rem)] flex-col border-l border-solid border-outline-variant bg-surface shadow-[-20px_0_60px_rgba(0,0,0,0.14)]",
+          "relative z-10 flex h-dvh w-[min(88vw,24rem)] flex-col border-l border-solid border-outline-variant bg-surface shadow-[-20px_0_60px_rgba(0,0,0,0.14)]",
           className,
         )}
       >

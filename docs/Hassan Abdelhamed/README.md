@@ -179,3 +179,84 @@ pnpm test
 # Run type checker to verify code consistency
 pnpm typecheck
 ```
+
+---
+
+## 9. Public Catalog Read Layer & Browse Filters (Member 1)
+
+We implemented a robust query engine for browsing and filtering products in the storefront catalog. The architecture supports advanced pagination, real-time filtering, NoSQL-injection prevention, and dynamic stock checks.
+
+### 9.1 Zod Sanitization & Query Security
+All search/filter inputs are strictly validated via `catalogFiltersSchema` inside `src/modules/catalog/schemas.ts`:
+*   **MongoDB Operator Protection**: User-submitted text searches are sanitized via `.transform((val) => val.replace(/[$]/g, ""))` to strip MongoDB `$` operators, preventing NoSQL injection.
+*   **Search Limits**: Pagination and page sizing are validated and capped at a maximum of `100` items per page to prevent memory exhaustion.
+
+### 9.2 Real-time Filters & Index Matching
+The catalog browse endpoint `listCatalogProducts(filters)` implements the following dynamic filters:
+*   **Category filter (`categorySlug`)**: Restricts queries to active categories. If a category is marked inactive (`isActive: false`), lookups throw `NotFoundError`.
+*   **Price range (`minPrice` & `maxPrice`)**: Filters products by `basePriceAmount` in EGP integer minor units (converts decimals to integers before querying).
+*   **Availability (`IN_STOCK`)**:
+    *   For `READY_MADE` products: Queries variants to ensure at least one active variant has `stockQuantity > 0`.
+    *   For `MADE_TO_ORDER` products: Bypasses stock checks as they are always available.
+*   **Materials & Colors (`material` & `color`)**: Performs case-insensitive matching using RegExp (`^value$`, `"i"`).
+*   **Keywords (`search`)**: Utilizes MongoDB text indexing (`$text` query) on product attributes (name, description, colors, materials, tags) for fast storefront indexing.
+
+### 9.3 Catalog Sorting Options
+*   `price_asc`: Sorts by base price ascending.
+*   `price_desc`: Sorts by base price descending.
+*   `newest`: Sorts by publication date (`publishedAt` / `createdAt` descending).
+*   `relevance`: Sorts by search term matching score using `{ score: { $meta: "textScore" } }`.
+
+### 9.4 Projection Mappings (DTO Resolution)
+*   **`mapCategoryToDTO`**: Projects database categories to safe objects.
+*   **`mapProductToCardDTO`**: Resolves `inStock` flags dynamically, and maps Cloudinary/S3 image URLs.
+*   **`mapProductToDetailDTO`**: Maps active variants, resolves pricing fallback overrides (falling back to product's `basePriceAmount` if variant price is omitted), and hides `stockQuantity` details for `MADE_TO_ORDER` items.
+
+---
+
+## 10. Catalog Caching & Storefront Freshness (Member 1)
+
+We implemented an optimized storefront caching strategy using Next.js `unstable_cache` (the Data Cache) to bypass database queries for public, static pages while maintaining instant data updates via custom invalidation helpers.
+
+### 10.1 The Metadata-Resolver Design Pattern
+To resolve dynamic cache tags based on slugs (e.g. `product:${slug}`) and specific IDs (e.g. `product:${id}` or `category:${categoryId}`):
+1.  **Lightweight Metadata Resolve**: The system first resolves the product or category slug to its dynamic database IDs (`id`, `categoryId`) using a lightweight Mongoose projection query, cached under a slug-based tag.
+2.  **Fully Tagged Query**: The main product details are then queried and cached using a dynamic tag list (`product:${id}`, `product:${slug}`, `products`, `category:${categoryId}`).
+3.  **Flexible Invalidation**: When an administrator updates a product, the admin action only knows the database ID. Busting `product:${id}` automatically evicts the dynamic slug cache wrappers, keeping storefront pages instantly synchronized.
+
+### 10.2 Cached Queries Map
+
+*   **`getCategoryNavigation()`** [SSG / ISR]: Cached with tag `categories` (revalidate: 24 hours).
+*   **`getHomepageCatalog(limit)`** [ISR with 1-hour background TTL]: Renders featured homepage collections with tags `home`, `products`, `categories` (revalidate: 1 hour).
+*   **`getProductBySlug(slug)`** [Dynamic SSR with Data Cache]: Renders product details using dynamic tags `product:${id}`, `product:${slug}`, `products`, and `category:${categoryId}` (revalidate: 1 hour).
+*   **`getCategoryBySlug(slug)`** [Dynamic SSR with Data Cache]: Renders category fields using dynamic tags `category:${id}`, `category:${slug}`, and `categories` (revalidate: 1 hour).
+*   **`getAvailableFilterMetadata()`** [Data Cache]: Resolves materials and colors using tag `products` (revalidate: 1 hour) to avoid heavy aggregation on dynamic browse listings.
+
+*Note: Dynamically filtered search feeds (`listCatalogProducts`) bypass caching to prevent cache bloat from arbitrary query parameter combinations.*
+
+---
+
+## 11. Search Engine Optimization (SEO) & Google Rich Snippets
+
+The platform uses server-rendered metadata configurations and JSON-LD structured schemas to maximize search crawler indexing and rich-result representation.
+
+### 11.1 Meta Tags & OpenGraph Integration
+*   **Dynamic Metadata Generation (`generateMetadata`)**: Category, shop, and product pages dynamically query SEO-specific values (e.g., custom page titles, truncated descriptions, and product image arrays).
+*   **Canonical Resolution**: Product and category routes resolve canonical URLs (e.g., `/product/[slug]`) server-side to prevent indexing duplicate page views.
+*   **Crawler Instructions**: Configured standard crawler parameters via dynamic robots routing (`robots.ts`) allowing public indexing of storefront assets while disallowing crawling of `/admin/*` directories.
+
+### 11.2 Structured Schema (JSON-LD JSON)
+Product detail pages inject structured JSON-LD schemas:
+*   **BreadcrumbList**: Maps navigation trails (Home -> Category -> Product) for search index hierarchy rendering.
+*   **Product Details Schema**: Exposes basic parameters, decimal EGP pricing resolved from integer minor units, and live inventory state (`InStock` / `OutOfStock`) matching ready-made/made-to-order stock rules. Offer shipping region parameters are bounded to `"EG"` (Egypt).
+
+---
+
+## 12. Caching & Freshness Verification Suite
+
+We added a mock caching test suite in [caching.test.ts](file:///d:/JS/Next.js/Afnan/src/test/integration/caching.test.ts) to verify caching behavior:
+1.  **Deduplication (Hits)**: Verifies subsequent query executions pull from cache rather than querying MongoDB.
+2.  **Tag Registration**: Asserts that queries register correct static and dynamic tags.
+3.  **On-Demand Invalidation**: Verifies that calling cache revalidation helper functions (`revalidateProductCache`, `revalidateCategoryCache`, `revalidateCatalogCache`) successfully updates tags and triggers database refreshes.
+
+

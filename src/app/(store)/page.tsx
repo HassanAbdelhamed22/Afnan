@@ -1,27 +1,48 @@
 import React from "react";
+import {
+  getCategoryNavigation,
+  getHomepageCatalog,
+  listCatalogProducts,
+} from "@/modules/catalog";
+import { Hero } from "@/components/home/hero";
+import { FeaturedCategories } from "@/components/home/featured-categories";
+import { FeaturedProducts } from "@/components/home/featured-products";
+import { NewArrivals } from "@/components/home/new-arrivals";
+import { CraftPhilosophy } from "@/components/home/craft-philosophy";
+import { CustomRequestCta } from "@/components/home/custom-request-cta";
+import { TrustFaq } from "@/components/home/trust-faq";
 
-export default function StoreHomePage() {
+export default async function StoreHomePage() {
+  // Concurrent data fetching for optimized response times
+  const [categories, homepageCatalog, newArrivalsData] = await Promise.all([
+    getCategoryNavigation(),
+    getHomepageCatalog(4),
+    listCatalogProducts({ limit: 8, sort: "newest" }),
+  ]);
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 text-center">
-      <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-neutral-900 mb-4">
-        Afnan Handmade E-Commerce
-      </h1>
-      <p className="text-lg text-neutral-600 max-w-md mb-8">
-        Welcome to Afnan, your premier destination for high-quality, Egyptian handmade products.
-      </p>
-      <div className="flex gap-4">
-        <a
-          href="/shop"
-          className="px-6 py-3 bg-neutral-900 text-white font-medium rounded-lg hover:bg-neutral-800 transition-colors"
-        >
-          Browse Shop
-        </a>
-        <a
-          href="/custom-request"
-          className="px-6 py-3 border border-neutral-300 text-neutral-700 font-medium rounded-lg hover:bg-neutral-50 transition-colors"
-        >
-          Custom Request
-        </a>
+    <div className="w-full overflow-x-clip bg-background">
+      {/* 1. Hero Cover Banner */}
+      <Hero />
+
+      <div className="flex flex-col">
+        {/* 2. Collections navigation */}
+        <FeaturedCategories categories={categories} />
+
+        {/* 3. Editor's selection */}
+        <FeaturedProducts products={homepageCatalog} />
+
+        {/* 4. Latest additions */}
+        <NewArrivals products={newArrivalsData.products} />
+
+        {/* 5. Craft and logistics philosophy */}
+        <CraftPhilosophy />
+
+        {/* 6. Custom requests CTA card */}
+        <CustomRequestCta />
+
+        {/* 7. Store trust features and FAQ section */}
+        <TrustFaq />
       </div>
     </div>
   );
