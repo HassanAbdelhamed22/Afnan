@@ -89,11 +89,13 @@ To direct index bots to useful consumer listing pages while blocking search engi
 Exposes the standard `/robots.txt` configuration:
 *   **Allow**: Permits crawl requests for all public storefront paths (shop listings, homepage, category listings, detail views).
 *   **Disallow**: Blocks search crawlers from inspecting or indexing admin pages (`/admin/*`) and private profiles/checkout routes.
-*   **Sitemap Binding**: Directs crawlers to the official sitemap endpoint.
+*   **Dynamic Sitemap Binding**: Automatically resolves the sitemap binding URL dynamically based on the environment host configuration `NEXT_PUBLIC_APP_URL` (falling back to `https://afnan.eg/sitemap.xml`).
 
-### 4.2 Site Map XML ([sitemap.ts](file:///d:/JS/Next.js/Afnan/src/app/sitemap.ts))
-Generates the `/sitemap.xml` resource mapping. 
-*   *Implementation Strategy*: Includes the storefront root path. It is planned to pull active category links and active product slug parameters dynamically from MongoDB to build index mapping arrays.
+### 4.2 Dynamic Site Map XML ([sitemap.ts](file:///d:/JS/Next.js/Afnan/src/app/sitemap.ts))
+Generates the `/sitemap.xml` resource mapping.
+*   **Dynamic Crawling & Indexing**: Queries active categories (reusing the high-performance navigation cache) and performs database projections for active products.
+*   **SEO Parameters**: Automatically maps URLs to their dynamic paths (e.g. `/category/[slug]`, `/product/[slug]`), attaches modification timestamps (`lastModified: prod.updatedAt`), and sets priority coefficients (e.g. `1.0` for root, `0.9` for products, `0.8` for shop, `0.7` for categories, `0.6` for custom requests).
+
 
 ---
 
