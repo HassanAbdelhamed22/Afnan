@@ -17,7 +17,7 @@ async function main() {
       slug: "clay-pots",
       description: "Beautiful hand-painted clay pots and ceramic planters crafted in Egypt.",
       image: {
-        url: "https://images.unsplash.com/photo-1576016770956-debb63d90029?q=80&w=800",
+        url: "https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c?q=80&w=800",
         publicId: "clay-pots-main",
         width: 800,
         height: 1000,
@@ -205,7 +205,7 @@ async function main() {
       personalizationAvailable: false,
       images: [
         {
-          url: "https://images.unsplash.com/photo-1576016770956-debb63d90029?q=80&w=800",
+          url: "https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c?q=80&w=800",
           publicId: "terracotta-pot-1",
           width: 800,
           height: 1000,
