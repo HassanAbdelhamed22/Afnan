@@ -801,7 +801,7 @@ async function main() {
       preparationDaysMax: 7,
       images: [
         {
-          url: "https://images.unsplash.com/photo-1580600301354-17c8053813f8?q=80&w=800",
+          url: "https://images.unsplash.com/photo-1559251606-c623743a6d76?q=80&w=800",
           publicId: "crochet-bunny-1",
           width: 800,
           height: 1000,
