@@ -205,7 +205,7 @@ async function main() {
       personalizationAvailable: false,
       images: [
         {
-          url: "https://images.unsplash.com/photo-1581514781448-912a76f272a8?q=80&w=800",
+          url: "https://images.unsplash.com/photo-1576016770956-debb63d90029?q=80&w=800",
           publicId: "terracotta-pot-1",
           width: 800,
           height: 1000,
