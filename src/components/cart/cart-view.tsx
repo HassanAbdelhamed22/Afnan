@@ -28,7 +28,7 @@ function announceCartChange(itemCount: number) {
   window.dispatchEvent(new CustomEvent("cart-updated", { detail: { itemCount } }));
 }
 
-export function CartView({ cart }: { cart: CartDTO }) {
+export function CartView({ cart, emailVerified }: { cart: CartDTO; emailVerified: boolean }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
@@ -210,13 +210,21 @@ export function CartView({ cart }: { cart: CartDTO }) {
         <p className="mt-5 body-sm text-on-surface-variant">
           Egyptian governorate shipping is calculated at checkout. Payment is cash on delivery.
         </p>
-        {cart.canCheckout ? (
+        {cart.canCheckout && emailVerified ? (
           <Link
             href="/checkout"
             className="mt-7 flex w-full items-center justify-center border border-primary bg-primary px-6 py-3 label-caps text-on-primary transition-colors hover:bg-primary-hover"
           >
             Continue to checkout
           </Link>
+        ) : cart.canCheckout ? (
+          <Button
+            type="button"
+            className="mt-7 w-full"
+            onClick={() => toast.show("Verify your email before checkout.", "error")}
+          >
+            Continue to checkout
+          </Button>
         ) : (
           <div className="mt-7 border border-outline-variant bg-surface-container-low px-4 py-3 body-sm text-on-surface-variant">
             Resolve unavailable items before checkout.

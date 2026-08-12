@@ -18,7 +18,7 @@ export default async function CartPage() {
       </header>
 
       {session ? (
-        <CartView cart={await getCustomerCart()} />
+        <CartView cart={await getCustomerCart()} emailVerified={session.user.emailVerified} />
       ) : (
         <div className="border border-outline-variant bg-surface px-6 py-16 text-center">
           <h2 className="headline-md text-on-background">Sign in to use your cart</h2>
