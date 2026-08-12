@@ -17,7 +17,9 @@ export function Header() {
   const router = useRouter();
   const { data: session } = useSession();
   const user = session?.user;
+  const userId = user?.id;
   const [menuOpen, setMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = async () => {
@@ -39,6 +41,37 @@ export function Header() {
     window.addEventListener("mousedown", handleClose);
     return () => window.removeEventListener("mousedown", handleClose);
   }, [menuOpen]);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    let active = true;
+    const loadCartCount = async () => {
+      try {
+        const response = await fetch("/api/cart/count", { cache: "no-store" });
+        if (!response.ok) return;
+        const payload = (await response.json()) as {
+          success: boolean;
+          data?: { itemCount?: number };
+        };
+        if (active && payload.success) setCartCount(payload.data?.itemCount ?? 0);
+      } catch {
+        if (active) setCartCount(0);
+      }
+    };
+    const handleCartUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<{ itemCount?: number }>).detail;
+      if (typeof detail?.itemCount === "number") setCartCount(detail.itemCount);
+      else void loadCartCount();
+    };
+
+    void loadCartCount();
+    window.addEventListener("cart-updated", handleCartUpdated);
+    return () => {
+      active = false;
+      window.removeEventListener("cart-updated", handleCartUpdated);
+    };
+  }, [userId]);
 
   if (pathname?.startsWith("/admin")) {
     return null;
@@ -249,7 +282,7 @@ export function Header() {
           <Link
             href="/cart"
             className="relative flex size-11 items-center justify-center text-on-background outline-none transition-opacity hover:opacity-60 focus-visible:ring-2 focus-visible:ring-primary"
-            aria-label="Cart, 0 items"
+            aria-label={`Cart, ${user ? cartCount : 0} items`}
           >
             <svg
               className="h-5 w-5"
@@ -268,7 +301,7 @@ export function Header() {
               aria-hidden="true"
               className="absolute right-0.5 top-0.5 flex h-4 min-w-4 select-none items-center justify-center bg-primary px-1 font-sans text-[9px] font-bold text-on-primary"
             >
-              0
+              {user ? cartCount : 0}
             </span>
           </Link>
 
