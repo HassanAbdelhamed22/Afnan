@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ function optionalValue(value?: string) {
 
 export function AddressBook({ addresses }: { addresses: AddressDTO[] }) {
   const router = useRouter();
+  const savedAddressesHeadingRef = useRef<HTMLHeadingElement>(null);
   const [editing, setEditing] = useState<AddressDTO | null>(null);
   const [showForm, setShowForm] = useState(addresses.length === 0);
   const [saveState, saveAction, saving] = useActionState(
@@ -36,6 +37,15 @@ export function AddressBook({ addresses }: { addresses: AddressDTO[] }) {
         setEditing(null);
         setShowForm(false);
         router.refresh();
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            savedAddressesHeadingRef.current?.focus({ preventScroll: true });
+            savedAddressesHeadingRef.current?.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          });
+        });
       }
       return result;
     },
@@ -225,8 +235,17 @@ export function AddressBook({ addresses }: { addresses: AddressDTO[] }) {
           <p className="mt-3 body-md text-on-surface-variant">Add an Egyptian address before checkout.</p>
         </div>
       ) : (
-        <div className="grid gap-5 lg:grid-cols-2">
-          {addresses.map((address) => (
+        <section aria-labelledby="saved-addresses-heading">
+          <h2
+            id="saved-addresses-heading"
+            ref={savedAddressesHeadingRef}
+            tabIndex={-1}
+            className="mb-5 headline-sm text-on-background outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4"
+          >
+            Saved addresses
+          </h2>
+          <div className="grid gap-5 lg:grid-cols-2">
+            {addresses.map((address) => (
             <article key={address.id} className="border border-outline-variant bg-surface p-6">
               <div className="flex items-start justify-between gap-4 border-b border-outline-variant pb-4">
                 <div>
@@ -284,8 +303,9 @@ export function AddressBook({ addresses }: { addresses: AddressDTO[] }) {
                 </form>
               </div>
             </article>
-          ))}
-        </div>
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );
