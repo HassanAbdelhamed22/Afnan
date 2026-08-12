@@ -1,6 +1,8 @@
 import { connectMongoose } from "../src/lib/mongoose";
 import { CategoryModel } from "../src/modules/categories/model";
 import { ProductModel } from "../src/modules/products/model";
+import { ShippingRateModel } from "../src/modules/shipping/model";
+import { egyptGovernorates } from "../src/config/egypt-governorates";
 
 async function main() {
   console.log("Connecting to database...");
@@ -9,6 +11,13 @@ async function main() {
   console.log("Cleaning database...");
   await CategoryModel.deleteMany({});
   await ProductModel.deleteMany({});
+  await ShippingRateModel.deleteMany({});
+
+  await ShippingRateModel.create(egyptGovernorates.map((rate) => ({
+    governorateCode: rate.code, governorateName: rate.name,
+    feeAmount: rate.shippingFee, minDeliveryDays: rate.minDeliveryDays,
+    maxDeliveryDays: rate.maxDeliveryDays, isActive: rate.active,
+  })));
 
   console.log("Seeding categories...");
   const categories = await CategoryModel.create([
