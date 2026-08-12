@@ -9,11 +9,15 @@ export const metadata: Metadata = {
 };
 
 type LoginPageProps = {
-  searchParams: Promise<{ returnTo?: string }>;
+  searchParams: Promise<{
+    returnTo?: string;
+    verified?: string;
+    error?: string;
+  }>;
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const { returnTo } = await searchParams;
+  const { returnTo, verified, error } = await searchParams;
 
   return (
     <>
@@ -28,7 +32,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </p>
       </header>
 
-      <LoginForm returnTo={returnTo} />
+      <LoginForm
+        returnTo={returnTo}
+        verified={verified === "true"}
+        verificationError={Boolean(error)}
+      />
     </>
   );
 }

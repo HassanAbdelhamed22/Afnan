@@ -127,6 +127,7 @@ export async function registerAction(
         password: parsed.data.password,
         phoneE164,
         whatsappE164,
+        callbackURL: `${env.NEXT_PUBLIC_APP_URL}/login?verified=true`,
       },
     });
 
@@ -136,7 +137,7 @@ export async function registerAction(
      */
     return actionSuccess(
       {},
-      "Registration completed. You can now sign in.",
+      "Registration completed. Check your email to verify your account.",
     );
   } catch (error) {
     console.error(
@@ -182,6 +183,9 @@ export async function loginAction(
         email: parsed.data.email,
         password: parsed.data.password,
         rememberMe: true,
+        callbackURL:
+          `${env.NEXT_PUBLIC_APP_URL}/login?verified=true&returnTo=` +
+          encodeURIComponent(returnTo),
       },
     });
   } catch (error) {
@@ -190,6 +194,13 @@ export async function loginAction(
      * password or account status failed.
      */
     if (isAPIError(error)) {
+      if (error.body?.code === "EMAIL_NOT_VERIFIED") {
+        return actionFailure(
+          "EMAIL_NOT_VERIFIED",
+          "Verify your email before signing in. We sent you a new verification link.",
+        );
+      }
+
       return actionFailure(
         "INVALID_CREDENTIALS",
         "Invalid email or password",

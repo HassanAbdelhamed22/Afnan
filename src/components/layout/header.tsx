@@ -198,6 +198,13 @@ export function Header() {
                       >
                         My Orders
                       </Link>
+                      <Link
+                        href="/account/custom-requests"
+                        onClick={() => setMenuOpen(false)}
+                        className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-on-background hover:opacity-60 transition-opacity"
+                      >
+                        Custom Requests
+                      </Link>
                       <button
                         onClick={() => {
                           setMenuOpen(false);

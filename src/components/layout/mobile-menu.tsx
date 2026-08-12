@@ -130,6 +130,14 @@ export function MobileMenu() {
                     Wishlist
                     <span aria-hidden="true" className="text-on-surface-variant">→</span>
                   </Link>
+                  <Link
+                    href="/account/custom-requests"
+                    onClick={closeMenu}
+                    className="flex min-h-11 items-center justify-between px-3 font-sans text-sm font-medium text-on-background no-underline outline-none transition-colors hover:bg-surface-container-low focus-visible:bg-surface-container-low"
+                  >
+                    Custom Requests
+                    <span aria-hidden="true" className="text-on-surface-variant">→</span>
+                  </Link>
                   <button
                     onClick={() => {
                       closeMenu();

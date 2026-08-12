@@ -10,6 +10,7 @@ import { toast } from "@/components/ui/toast";
 import type { ActionResult } from "@/lib/results/action-result";
 import { updateProfileAction } from "@/modules/users/actions";
 import type { CustomerProfileDTO } from "@/modules/users/dto";
+import { ResendVerificationButton } from "@/components/auth/resend-verification-button";
 
 export function ProfileForm({ profile }: { profile: CustomerProfileDTO }) {
   const router = useRouter();
@@ -43,9 +44,14 @@ export function ProfileForm({ profile }: { profile: CustomerProfileDTO }) {
 
       <FormField htmlFor="profile-email" label="Email address">
         <Input id="profile-email" value={profile.email} readOnly disabled />
-        <p className="body-sm text-on-surface-variant">
-          Email changes are managed through account security.
-        </p>
+        {profile.emailVerified ? (
+          <p className="body-sm text-primary">Email verified</p>
+        ) : (
+          <div className="space-y-3">
+            <p className="body-sm text-error">Email verification required</p>
+            <ResendVerificationButton email={profile.email} />
+          </div>
+        )}
       </FormField>
 
       <div className="grid gap-7 md:grid-cols-2">

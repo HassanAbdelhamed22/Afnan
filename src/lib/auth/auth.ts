@@ -12,7 +12,10 @@ import {
   authDatabase,
   authMongoClient,
 } from "@/lib/auth/mongo-client";
-import { sendPasswordResetEmail } from "@/lib/email";
+import {
+  sendEmailVerificationEmail,
+  sendPasswordResetEmail,
+} from "@/lib/email";
 import { env } from "@/lib/env";
 import { normalizeEgyptianPhone } from "@/lib/phone";
 
@@ -37,13 +40,36 @@ export const auth = betterAuth({
     client: authMongoClient,
   }),
 
+  emailVerification: {
+    expiresIn: 60 * 60,
+    sendOnSignUp: true,
+    sendOnSignIn: true,
+    autoSignInAfterVerification: false,
+    sendVerificationEmail: async ({ user, url }) => {
+      after(async () => {
+        try {
+          await sendEmailVerificationEmail({
+            email: user.email,
+            name: user.name,
+            verificationUrl: url,
+          });
+        } catch (error) {
+          console.error("Email verification delivery failed", {
+            userId: user.id,
+            error,
+          });
+        }
+      });
+    },
+  },
+
   emailAndPassword: {
     enabled: true,
 
     minPasswordLength: 8,
     maxPasswordLength: 128,
 
-    requireEmailVerification: false,
+    requireEmailVerification: true,
 
     /*
      * Keeping this false gives Better Auth stronger
