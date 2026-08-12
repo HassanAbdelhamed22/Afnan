@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
 import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
@@ -28,6 +29,7 @@ export function AddressBook({ addresses }: { addresses: AddressDTO[] }) {
   const addressFormRef = useRef<HTMLFormElement>(null);
   const savedAddressesHeadingRef = useRef<HTMLHeadingElement>(null);
   const [editing, setEditing] = useState<AddressDTO | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<AddressDTO | null>(null);
   const [showForm, setShowForm] = useState(addresses.length === 0);
   const [saveState, saveAction, saving] = useActionState(
     async (previousState: ActionResult<AddressDTO | null>, formData: FormData) => {
@@ -85,18 +87,23 @@ export function AddressBook({ addresses }: { addresses: AddressDTO[] }) {
     },
     emptyAddressResult,
   );
-  const [deleteState, deleteAction, deleting] = useActionState(deleteAddressAction, emptyResult);
+  const [, deleteAction, deleting] = useActionState(
+    async (previousState: ActionResult<Record<string, never>>, formData: FormData) => {
+      const result = await deleteAddressAction(previousState, formData);
+      const message = result.ok ? result.message : result.error.message;
+      if (message) toast.show(message, result.ok ? "success" : "error");
+      if (result.ok) {
+        setPendingDelete(null);
+        router.refresh();
+      }
+      return result;
+    },
+    emptyResult,
+  );
   const [defaultState, defaultAction, settingDefault] = useActionState(
     setDefaultAddressAction,
     emptyResult,
   );
-
-  useEffect(() => {
-    const message = deleteState.ok ? deleteState.message : deleteState.error.message;
-    if (!message) return;
-    toast.show(message, deleteState.ok ? "success" : "error");
-    if (deleteState.ok) router.refresh();
-  }, [deleteState, router]);
 
   useEffect(() => {
     const message = defaultState.ok ? defaultState.message : defaultState.error.message;
@@ -325,23 +332,57 @@ export function AddressBook({ addresses }: { addresses: AddressDTO[] }) {
                     </Button>
                   </form>
                 )}
-                <form
-                  action={deleteAction}
-                  onSubmit={(event) => {
-                    if (!window.confirm("Delete this delivery address?")) event.preventDefault();
-                  }}
+                <Button
+                  type="button"
+                  variant="text"
+                  disabled={deleting}
+                  className="text-error"
+                  onClick={() => setPendingDelete(address)}
                 >
-                  <input type="hidden" name="addressId" value={address.id} />
-                  <Button type="submit" variant="text" disabled={deleting} className="text-error">
-                    Delete
-                  </Button>
-                </form>
+                  Delete
+                </Button>
               </div>
             </article>
             ))}
           </div>
         </section>
       )}
+
+      <Dialog
+        isOpen={Boolean(pendingDelete)}
+        onClose={() => {
+          if (!deleting) setPendingDelete(null);
+        }}
+        title="Delete delivery address?"
+        className="max-w-md"
+      >
+        <p className="body-md text-on-surface-variant">
+          {pendingDelete
+            ? `The ${pendingDelete.label} address will be permanently removed from your saved addresses.`
+            : "This saved address will be permanently removed."}
+        </p>
+        <form action={deleteAction} className="mt-6 border-t border-outline-variant pt-5">
+          <input type="hidden" name="addressId" value={pendingDelete?.id ?? ""} />
+          <div className="flex flex-wrap justify-end gap-3">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={deleting}
+              onClick={() => setPendingDelete(null)}
+            >
+              Keep address
+            </Button>
+            <Button
+              type="submit"
+              disabled={deleting || !pendingDelete}
+              aria-busy={deleting}
+              className="bg-error text-on-error hover:opacity-85"
+            >
+              {deleting ? "Deleting…" : "Delete address"}
+            </Button>
+          </div>
+        </form>
+      </Dialog>
     </div>
   );
 }

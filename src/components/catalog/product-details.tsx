@@ -3,6 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   type ProductDetailDTO,
   type ProductCardDTO,
@@ -11,6 +12,9 @@ import { formatEGP } from "@/lib/money";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/shared/product-card";
 import { cn } from "@/lib/utils";
+import { useSession } from "@/lib/auth/auth-client";
+import { toast } from "@/components/ui/toast";
+import { addToCartAction } from "@/modules/cart/actions";
 
 interface ProductDetailsProps {
   product: ProductDetailDTO;
@@ -25,6 +29,9 @@ export function ProductDetails({
   categoryName,
   categorySlug,
 }: ProductDetailsProps) {
+  const router = useRouter();
+  const { data: session } = useSession();
+  const [addingToCart, startAddingToCart] = React.useTransition();
   // Gallery state
   const [activeImageIdx, setActiveImageIdx] = React.useState(0);
   const activeImage = product.images?.[activeImageIdx] || null;
@@ -80,6 +87,40 @@ export function ProductDetails({
       return;
     }
     setQuantity(val);
+  };
+
+  const handleAddToCart = () => {
+    if (!session?.user) {
+      router.push(`/login?returnTo=${encodeURIComponent(`/product/${product.slug}`)}`);
+      return;
+    }
+    if (!selectedVariant) {
+      toast.show("Select a product option", "error");
+      return;
+    }
+
+    startAddingToCart(async () => {
+      try {
+        const result = await addToCartAction({
+          productId: product.id,
+          variantId: selectedVariant.id,
+          quantity,
+          personalization: personalizationText,
+        });
+        if (!result.ok) {
+          toast.show(result.error.message, "error");
+          return;
+        }
+        toast.show(result.message ?? "Added to cart", "success");
+        window.dispatchEvent(
+          new CustomEvent("cart-updated", { detail: { itemCount: result.data.itemCount } }),
+        );
+        router.refresh();
+      } catch {
+        toast.show("Your session expired. Please sign in again.", "error");
+        router.push(`/login?returnTo=${encodeURIComponent(`/product/${product.slug}`)}`);
+      }
+    });
   };
 
   return (
@@ -335,10 +376,11 @@ export function ProductDetails({
                 {/* Add to Cart slot button */}
                 <Button
                   variant="primary"
-                  disabled={isOutOfStock}
+                  disabled={isOutOfStock || addingToCart}
+                  onClick={handleAddToCart}
                   className="flex-1 py-3 text-xs tracking-wider"
                 >
-                  {isOutOfStock ? "Out of Stock" : "Add to Cart"}
+                  {isOutOfStock ? "Out of Stock" : addingToCart ? "Adding…" : "Add to Cart"}
                 </Button>
               </div>
 
@@ -482,9 +524,11 @@ export function ProductDetails({
             </div>
             <Button
               variant="primary"
+              disabled={isOutOfStock || addingToCart}
+              onClick={handleAddToCart}
               className="py-3 px-6 text-xs tracking-wider min-h-11"
             >
-              Add to Cart
+              {isOutOfStock ? "Out of Stock" : addingToCart ? "Adding…" : "Add to Cart"}
             </Button>
           </div>
         </div>
