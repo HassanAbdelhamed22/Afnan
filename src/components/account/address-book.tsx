@@ -150,7 +150,7 @@ export function AddressBook({ addresses }: { addresses: AddressDTO[] }) {
                 id="address-governorate"
                 name="governorateCode"
                 defaultValue={editing?.governorateCode ?? ""}
-                className="w-full border-b border-outline-variant bg-transparent py-2 body-md text-on-background outline-none transition-colors focus:border-primary"
+                className="themed-native-select w-full border-b border-outline-variant bg-transparent py-2 body-md text-on-background outline-none transition-colors focus:border-primary"
                 required
               >
                 <option value="" disabled>Select a governorate</option>
