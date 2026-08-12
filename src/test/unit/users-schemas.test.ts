@@ -71,4 +71,19 @@ describe("Egyptian address validation", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it.each(["building", "floor", "apartment"] as const)(
+    "requires the %s field",
+    (field) => {
+      const result = addressInputSchema.safeParse({
+        ...validAddress,
+        [field]: "",
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.flatten().fieldErrors[field]?.[0]).toContain("required");
+      }
+    },
+  );
 });

@@ -12,9 +12,9 @@ export interface IAddress extends Document {
   city: string;
   area?: string;
   street: string;
-  building?: string;
-  floor?: string;
-  apartment?: string;
+  building: string;
+  floor: string;
+  apartment: string;
   landmark?: string;
   notes?: string;
   isDefault: boolean;
@@ -32,9 +32,9 @@ const AddressSchema = new Schema<IAddress>(
     city: { type: String, required: true, trim: true, maxlength: 80 },
     area: { type: String, trim: true, maxlength: 80 },
     street: { type: String, required: true, trim: true, maxlength: 160 },
-    building: { type: String, trim: true, maxlength: 40 },
-    floor: { type: String, trim: true, maxlength: 20 },
-    apartment: { type: String, trim: true, maxlength: 20 },
+    building: { type: String, required: true, trim: true, maxlength: 40 },
+    floor: { type: String, required: true, trim: true, maxlength: 20 },
+    apartment: { type: String, required: true, trim: true, maxlength: 20 },
     landmark: { type: String, trim: true, maxlength: 160 },
     notes: { type: String, trim: true, maxlength: 500 },
     isDefault: { type: Boolean, required: true, default: false },

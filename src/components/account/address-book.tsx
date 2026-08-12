@@ -215,15 +215,15 @@ export function AddressBook({ addresses }: { addresses: AddressDTO[] }) {
             <FormField htmlFor="address-street" label="Street" error={errors?.street?.[0]} className="md:col-span-2">
               <Input id="address-street" name="street" autoComplete="street-address" defaultValue={editing?.street} required />
             </FormField>
-            <FormField htmlFor="address-building" label="Building (optional)" error={errors?.building?.[0]}>
-              <Input id="address-building" name="building" defaultValue={optionalValue(editing?.building)} />
+            <FormField htmlFor="address-building" label="Building" error={errors?.building?.[0]}>
+              <Input id="address-building" name="building" defaultValue={editing?.building} required />
             </FormField>
             <div className="grid grid-cols-2 gap-5">
               <FormField htmlFor="address-floor" label="Floor" error={errors?.floor?.[0]}>
-                <Input id="address-floor" name="floor" defaultValue={optionalValue(editing?.floor)} />
+                <Input id="address-floor" name="floor" defaultValue={editing?.floor} required />
               </FormField>
               <FormField htmlFor="address-apartment" label="Apartment" error={errors?.apartment?.[0]}>
-                <Input id="address-apartment" name="apartment" defaultValue={optionalValue(editing?.apartment)} />
+                <Input id="address-apartment" name="apartment" defaultValue={editing?.apartment} required />
               </FormField>
             </div>
             <FormField htmlFor="address-landmark" label="Landmark (optional)" error={errors?.landmark?.[0]} className="md:col-span-2">

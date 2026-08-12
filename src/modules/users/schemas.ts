@@ -50,13 +50,13 @@ export const addressInputSchema = z.object({
     .string()
     .trim()
     .toLowerCase()
-    .refine((value) => egyptGovernorateCodes.has(value), "Select an Egyptian governorate"),
+    .refine((value) => egyptGovernorateCodes.has(value), "Select a governorate"),
   city: z.string().trim().min(2, "City is required").max(80, "City is too long"),
   area: optionalText(80),
   street: z.string().trim().min(2, "Street is required").max(160, "Street is too long"),
-  building: optionalText(40),
-  floor: optionalText(20),
-  apartment: optionalText(20),
+  building: z.string().trim().min(1, "Building is required").max(40, "Building is too long"),
+  floor: z.string().trim().min(1, "Floor is required").max(20, "Floor is too long"),
+  apartment: z.string().trim().min(1, "Apartment is required").max(20, "Apartment is too long"),
   landmark: optionalText(160),
   notes: optionalText(500),
   isDefault: z.boolean().default(false),

@@ -53,6 +53,9 @@ function validAddressForm() {
   formData.set("governorateCode", "cairo");
   formData.set("city", "Nasr City");
   formData.set("street", "Makram Ebeid Street");
+  formData.set("building", "12");
+  formData.set("floor", "3");
+  formData.set("apartment", "8");
   formData.set("isDefault", "on");
   return formData;
 }
@@ -71,7 +74,7 @@ describe("customer profile and address actions", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error.fieldErrors?.governorateCode).toEqual([
-        "Select an Egyptian governorate",
+        "Select a governorate",
       ]);
       expect(result.error.fieldErrors?.label).not.toContain(
         "Invalid input: expected string, received null",

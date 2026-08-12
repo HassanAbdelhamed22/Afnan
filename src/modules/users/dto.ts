@@ -17,9 +17,9 @@ export interface AddressDTO {
   city: string;
   area?: string;
   street: string;
-  building?: string;
-  floor?: string;
-  apartment?: string;
+  building: string;
+  floor: string;
+  apartment: string;
   landmark?: string;
   notes?: string;
   isDefault: boolean;

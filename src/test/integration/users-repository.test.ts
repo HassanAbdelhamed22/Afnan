@@ -38,6 +38,9 @@ const addressInput = {
   governorateCode: "cairo",
   city: "Nasr City",
   street: "Makram Ebeid Street",
+  building: "12",
+  floor: "3",
+  apartment: "8",
   isDefault: false,
 };
 
@@ -50,6 +53,9 @@ function addressRecord(overrides: Record<string, unknown> = {}) {
     governorateCode: "cairo",
     city: "Nasr City",
     street: "Makram Ebeid Street",
+    building: "12",
+    floor: "3",
+    apartment: "8",
     isDefault: true,
     createdAt: new Date("2026-08-01T00:00:00Z"),
     updatedAt: new Date("2026-08-01T00:00:00Z"),
