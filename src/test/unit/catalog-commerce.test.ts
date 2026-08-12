@@ -18,6 +18,7 @@ vi.mock("@/modules/categories/model", () => ({
 import {
   getPurchasableVariant,
   listProductsForCart,
+  listProductsForWishlist,
 } from "@/modules/catalog/commerce";
 
 const productId = new Types.ObjectId("507f1f77bcf86cd799439011");
@@ -59,7 +60,7 @@ describe("commerce catalog truth", () => {
     vi.clearAllMocks();
     mocks.connectMongoose.mockResolvedValue(undefined);
     mocks.findProducts.mockReturnValue(queryResult([product()]));
-    mocks.findCategories.mockReturnValue(queryResult([{ _id: categoryId }]));
+    mocks.findCategories.mockReturnValue(queryResult([{ _id: categoryId, name: "Bags" }]));
   });
 
   it("returns current variant price and stock without shared caching", async () => {
@@ -117,5 +118,25 @@ describe("commerce catalog truth", () => {
       productId.toString(),
     ]);
     expect(results[0].issue).toBe("PRODUCT_UNAVAILABLE");
+  });
+
+  it("maps current public product cards for wishlists", async () => {
+    const [result] = await listProductsForWishlist([productId.toString()]);
+
+    expect(result).toMatchObject({
+      id: productId.toString(),
+      name: "Handmade Bag",
+      categoryName: "Bags",
+      basePriceAmount: 25000,
+      inStock: true,
+    });
+  });
+
+  it("hides wishlist products from inactive categories", async () => {
+    mocks.findCategories.mockReturnValue(queryResult([]));
+
+    const [result] = await listProductsForWishlist([productId.toString()]);
+
+    expect(result).toBeUndefined();
   });
 });

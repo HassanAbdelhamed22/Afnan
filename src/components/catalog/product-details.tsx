@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { useSession } from "@/lib/auth/auth-client";
 import { toast } from "@/components/ui/toast";
 import { addToCartAction } from "@/modules/cart/actions";
+import { WishlistButton } from "@/components/wishlist/wishlist-button";
 
 interface ProductDetailsProps {
   product: ProductDetailDTO;
@@ -385,12 +386,12 @@ export function ProductDetails({
               </div>
 
               {/* Wishlist slot button */}
-              <Button
-                variant="secondary"
-                className="w-full py-3 text-xs tracking-wider border border-solid border-outline-variant"
-              >
-                Add to Wishlist
-              </Button>
+              <WishlistButton
+                productId={product.id}
+                productName={product.name}
+                returnTo={`/product/${product.slug}`}
+                variant="full"
+              />
             </div>
 
             {/* Specifications Collapsible Accordions */}

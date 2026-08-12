@@ -3,6 +3,7 @@ import { CategoryModel } from "../src/modules/categories/model";
 import { ProductModel } from "../src/modules/products/model";
 import { AddressModel } from "../src/modules/users/model";
 import { CartModel } from "../src/modules/cart/model";
+import { WishlistModel } from "../src/modules/wishlist/model";
 
 async function main() {
   console.log("Connecting to database...");
@@ -20,6 +21,9 @@ async function main() {
 
   await CartModel.ensureIndexes();
   console.log("Cart indexes created.");
+
+  await WishlistModel.ensureIndexes();
+  console.log("Wishlist indexes created.");
 
   console.log("All indexes successfully synchronized.");
   process.exit(0);

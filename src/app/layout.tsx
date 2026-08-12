@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/layout/theme-provider";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { ToastProvider } from "@/components/ui/toast";
+import { WishlistProvider } from "@/components/wishlist/wishlist-provider";
 
 const ebGaramond = EB_Garamond({
   variable: "--font-eb-garamond",
@@ -34,10 +35,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body className="min-h-full flex flex-col bg-background text-on-background transition-colors duration-300">
         <ThemeProvider>
-          <Header />
-          <ToastProvider />
-          <main className="flex-1 w-full">{children}</main>
-          <Footer />
+          <WishlistProvider>
+            <Header />
+            <ToastProvider />
+            <main className="flex-1 w-full">{children}</main>
+            <Footer />
+          </WishlistProvider>
         </ThemeProvider>
       </body>
     </html>
