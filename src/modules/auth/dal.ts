@@ -38,7 +38,11 @@ export async function requireUser() {
 }
 
 export async function requireVerifiedUser() {
-  return requireUser();
+  const session = await requireUser();
+  if (!session.user.emailVerified) {
+    throw new ForbiddenError("Verify your email before checkout");
+  }
+  return session;
 }
 
 export async function requireAdmin() {

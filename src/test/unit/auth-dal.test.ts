@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-import { getCurrentSession, requireUser, requireAdmin, getCurrentUserDTO } from "@/modules/auth/dal";
+import { getCurrentSession, requireUser, requireVerifiedUser, requireAdmin, getCurrentUserDTO } from "@/modules/auth/dal";
 import { UnauthenticatedError, ForbiddenError } from "@/lib/errors/app-error";
 import { auth } from "@/lib/auth/auth";
 
@@ -75,6 +75,13 @@ describe("Auth DAL", () => {
 
       const session = await requireAdmin();
       expect(session).toEqual(mockSession);
+    });
+  });
+
+  describe("requireVerifiedUser", () => {
+    it("rejects an active customer whose email is not verified", async () => {
+      vi.mocked(auth.api.getSession).mockResolvedValue({ user: { id: "1", status: "ACTIVE", emailVerified: false } } as unknown as typeof auth.$Infer.Session);
+      await expect(requireVerifiedUser()).rejects.toThrow(ForbiddenError);
     });
   });
 

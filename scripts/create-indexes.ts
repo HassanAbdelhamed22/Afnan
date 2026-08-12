@@ -4,6 +4,8 @@ import { ProductModel } from "../src/modules/products/model";
 import { AddressModel } from "../src/modules/users/model";
 import { CartModel } from "../src/modules/cart/model";
 import { WishlistModel } from "../src/modules/wishlist/model";
+import { OrderModel } from "../src/modules/orders/model";
+import { ShippingRateModel } from "../src/modules/shipping/model";
 
 async function main() {
   console.log("Connecting to database...");
@@ -24,6 +26,10 @@ async function main() {
 
   await WishlistModel.ensureIndexes();
   console.log("Wishlist indexes created.");
+
+  await OrderModel.ensureIndexes();
+  await ShippingRateModel.ensureIndexes();
+  console.log("Order and shipping indexes created.");
 
   console.log("All indexes successfully synchronized.");
   process.exit(0);

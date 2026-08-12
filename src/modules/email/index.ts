@@ -1,1 +1,1 @@
-export {};
+export { sendNewOrderAdminEmail } from "./orders";
