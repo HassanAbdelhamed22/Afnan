@@ -3,9 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/toast";
 import { formatEGP } from "@/lib/money";
 import {
@@ -30,8 +31,12 @@ function announceCartChange(itemCount: number) {
 export function CartView({ cart }: { cart: CartDTO }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [clearDialogOpen, setClearDialogOpen] = useState(false);
 
-  const runMutation = (operation: () => ReturnType<typeof clearCartAction>) => {
+  const runMutation = (
+    operation: () => ReturnType<typeof clearCartAction>,
+    onSuccess?: () => void,
+  ) => {
     startTransition(async () => {
       const result = await operation();
       if (!result.ok) {
@@ -40,6 +45,7 @@ export function CartView({ cart }: { cart: CartDTO }) {
       }
       toast.show(result.message ?? "Cart updated", "success");
       announceCartChange(result.data.itemCount);
+      onSuccess?.();
       router.refresh();
     });
   };
@@ -73,11 +79,7 @@ export function CartView({ cart }: { cart: CartDTO }) {
             type="button"
             variant="text"
             disabled={pending}
-            onClick={() => {
-              if (window.confirm("Remove every item from your cart?")) {
-                runMutation(() => clearCartAction());
-              }
-            }}
+            onClick={() => setClearDialogOpen(true)}
           >
             Clear cart
           </Button>
@@ -221,6 +223,40 @@ export function CartView({ cart }: { cart: CartDTO }) {
           </div>
         )}
       </aside>
+
+      <Dialog
+        isOpen={clearDialogOpen}
+        onClose={() => {
+          if (!pending) setClearDialogOpen(false);
+        }}
+        title="Clear your cart?"
+        className="max-w-md"
+      >
+        <p className="body-md text-on-surface-variant">
+          This will remove every selected piece from your cart. This action cannot be undone.
+        </p>
+        <div className="mt-6 flex flex-wrap justify-end gap-3 border-t border-outline-variant pt-5">
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={pending}
+            onClick={() => setClearDialogOpen(false)}
+          >
+            Keep items
+          </Button>
+          <Button
+            type="button"
+            disabled={pending}
+            aria-busy={pending}
+            className="bg-error text-on-error hover:opacity-85"
+            onClick={() =>
+              runMutation(() => clearCartAction(), () => setClearDialogOpen(false))
+            }
+          >
+            {pending ? "Clearing…" : "Clear cart"}
+          </Button>
+        </div>
+      </Dialog>
     </div>
   );
 }
