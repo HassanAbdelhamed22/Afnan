@@ -20,15 +20,20 @@ import type { AddressDTO, CustomerProfileDTO } from "./dto";
 
 type EmptyData = Record<string, never>;
 
+function formText(formData: FormData, field: string): string {
+  const value = formData.get(field);
+  return typeof value === "string" ? value : "";
+}
+
 export async function updateProfileAction(
   _previousState: ActionResult<CustomerProfileDTO | null>,
   formData: FormData,
 ): Promise<ActionResult<CustomerProfileDTO | null>> {
   const session = await requireUser();
   const parsed = profileInputSchema.safeParse({
-    name: formData.get("name"),
-    phone: formData.get("phone"),
-    whatsappPhone: formData.get("whatsappPhone"),
+    name: formText(formData, "name"),
+    phone: formText(formData, "phone"),
+    whatsappPhone: formText(formData, "whatsappPhone"),
   });
 
   if (!parsed.success) {
@@ -73,18 +78,18 @@ export async function saveAddressAction(
 ): Promise<ActionResult<AddressDTO | null>> {
   const session = await requireUser();
   const parsed = addressInputSchema.safeParse({
-    label: formData.get("label"),
-    recipientName: formData.get("recipientName"),
-    phone: formData.get("phone"),
-    governorateCode: formData.get("governorateCode"),
-    city: formData.get("city"),
-    area: formData.get("area") ?? "",
-    street: formData.get("street"),
-    building: formData.get("building") ?? "",
-    floor: formData.get("floor") ?? "",
-    apartment: formData.get("apartment") ?? "",
-    landmark: formData.get("landmark") ?? "",
-    notes: formData.get("notes") ?? "",
+    label: formText(formData, "label"),
+    recipientName: formText(formData, "recipientName"),
+    phone: formText(formData, "phone"),
+    governorateCode: formText(formData, "governorateCode"),
+    city: formText(formData, "city"),
+    area: formText(formData, "area"),
+    street: formText(formData, "street"),
+    building: formText(formData, "building"),
+    floor: formText(formData, "floor"),
+    apartment: formText(formData, "apartment"),
+    landmark: formText(formData, "landmark"),
+    notes: formText(formData, "notes"),
     isDefault: formData.get("isDefault") === "on",
   });
 

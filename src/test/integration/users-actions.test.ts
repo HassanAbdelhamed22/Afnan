@@ -69,6 +69,14 @@ describe("customer profile and address actions", () => {
     expect(mocks.requireUser).toHaveBeenCalledOnce();
     expect(mocks.createAddressRecord).not.toHaveBeenCalled();
     expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.fieldErrors?.governorateCode).toEqual([
+        "Select an Egyptian governorate",
+      ]);
+      expect(result.error.fieldErrors?.label).not.toContain(
+        "Invalid input: expected string, received null",
+      );
+    }
   });
 
   it("creates an address under the authenticated user ID", async () => {
