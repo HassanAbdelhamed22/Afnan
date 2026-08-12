@@ -7,6 +7,7 @@ import { connectMongoose } from "@/lib/mongoose";
 import { CategoryModel } from "@/modules/categories/model";
 import { ProductModel } from "@/modules/products/model";
 import type { MediaAsset } from "@/modules/uploads/types";
+import type { ProductCardDTO } from "./dto";
 
 export type CartCatalogIssue =
   | "PRODUCT_UNAVAILABLE"
@@ -203,4 +204,68 @@ export async function getPurchasableVariant(
     );
   }
   return result;
+}
+
+interface WishlistProductRecord extends CommerceProductRecord {
+  isFeatured: boolean;
+}
+
+/** Uncached public product truth for private wishlists. Missing or hidden products map to undefined. */
+export async function listProductsForWishlist(
+  productIds: string[],
+): Promise<Array<ProductCardDTO | undefined>> {
+  if (productIds.length === 0) return [];
+
+  await connectMongoose();
+  const validIds = productIds
+    .filter((id) => Types.ObjectId.isValid(id))
+    .map((id) => new Types.ObjectId(id));
+  const products = await ProductModel.find({ _id: { $in: validIds }, status: "ACTIVE" })
+    .select(
+      "name slug categoryId fulfillmentType basePriceAmount currency images variants isFeatured preparationDaysMin preparationDaysMax",
+    )
+    .lean<WishlistProductRecord[]>();
+  const categories = await CategoryModel.find({
+    _id: { $in: products.map((product) => product.categoryId) },
+    isActive: true,
+  })
+    .select("_id name")
+    .lean<Array<{ _id: Types.ObjectId; name: string }>>();
+  const categoryNames = new Map(
+    categories.map((category) => [category._id.toString(), category.name]),
+  );
+  const productsById = new Map(products.map((product) => [product._id.toString(), product]));
+
+  return productIds.map((productId) => {
+    const product = productsById.get(productId);
+    if (!product) return undefined;
+    const categoryName = categoryNames.get(product.categoryId.toString());
+    if (!categoryName) return undefined;
+    return {
+      id: product._id.toString(),
+      name: product.name,
+      slug: product.slug,
+      categoryId: product.categoryId.toString(),
+      categoryName,
+      fulfillmentType: product.fulfillmentType,
+      basePriceAmount: product.basePriceAmount,
+      currency: "EGP",
+      images: product.images,
+      isFeatured: product.isFeatured,
+      preparationDaysMin: product.preparationDaysMin,
+      preparationDaysMax: product.preparationDaysMax,
+      inStock:
+        product.fulfillmentType === "MADE_TO_ORDER" ||
+        product.variants.some(
+          (variant) => variant.isActive && (variant.stockQuantity ?? 0) > 0,
+        ),
+    };
+  });
+}
+
+export async function getWishableProduct(productId: string): Promise<ProductCardDTO> {
+  if (!Types.ObjectId.isValid(productId)) throw new NotFoundError("Product not found");
+  const [product] = await listProductsForWishlist([productId]);
+  if (!product) throw new NotFoundError("Product not found");
+  return product;
 }

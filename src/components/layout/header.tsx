@@ -11,6 +11,7 @@ import { MobileMenu } from "./mobile-menu";
 import { Logo } from "./logo";
 import { useSession, signOut } from "@/lib/auth/auth-client";
 import { toast } from "@/components/ui/toast";
+import { useWishlist } from "@/components/wishlist/wishlist-provider";
 
 export function Header() {
   const pathname = usePathname();
@@ -20,6 +21,7 @@ export function Header() {
   const userId = user?.id;
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  const { itemCount: wishlistCount } = useWishlist();
   const menuRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = async () => {
@@ -254,7 +256,7 @@ export function Header() {
             <Link
               href="/account/wishlist"
               className="relative hidden size-11 items-center justify-center text-on-background outline-none transition-opacity hover:opacity-60 focus-visible:ring-2 focus-visible:ring-primary sm:flex"
-              aria-label="Wishlist, 0 items"
+              aria-label={`Wishlist, ${wishlistCount} items`}
             >
               <svg
                 className="h-5 w-5"
@@ -273,7 +275,7 @@ export function Header() {
                 aria-hidden="true"
                 className="absolute right-0.5 top-0.5 flex h-4 min-w-4 select-none items-center justify-center bg-primary px-1 font-sans text-[9px] font-bold text-on-primary"
               >
-                0
+                {wishlistCount}
               </span>
             </Link>
           )}

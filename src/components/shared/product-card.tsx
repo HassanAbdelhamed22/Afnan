@@ -4,18 +4,28 @@ import { type ProductCardDTO } from "@/modules/catalog/dto";
 import { formatEGP } from "@/lib/money";
 import { Badge } from "@/components/ui/badge";
 import { ImagePlaceholder } from "@/components/ui/image-placeholder";
+import { WishlistButton } from "@/components/wishlist/wishlist-button";
 
 export interface ProductCardProps {
   product: ProductCardDTO;
   priority?: boolean;
+  wishlistSaved?: boolean;
 }
 
-export function ProductCard({ product, priority = false }: ProductCardProps) {
+export function ProductCard({ product, priority = false, wishlistSaved }: ProductCardProps) {
   const mainImage = product.images?.[0];
   const isOutOfStock = product.fulfillmentType === "READY_MADE" && !product.inStock;
 
   return (
-    <article className="w-full min-w-0">
+    <article className="relative w-full min-w-0">
+      <div className="absolute right-2 top-2 z-30 sm:right-3 sm:top-3">
+        <WishlistButton
+          productId={product.id}
+          productName={product.name}
+          returnTo={`/product/${product.slug}`}
+          isSavedInitially={wishlistSaved}
+        />
+      </div>
       <Link href={`/product/${product.slug}`} className="group block text-on-background no-underline outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4">
       <div className="relative flex aspect-4/5 w-full items-center justify-center overflow-hidden border border-outline-variant bg-[#F7F7F5] transition-colors duration-300 ease-expo-out group-hover:border-primary">
         {mainImage ? (

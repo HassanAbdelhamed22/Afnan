@@ -13,7 +13,7 @@ const shopLinks = [
 const accountLinks = [
   ["My profile", "/account/profile"],
   ["Orders", "/account/orders"],
-  ["Wishlist", "/wishlist"],
+  ["Wishlist", "/account/wishlist"],
   ["Addresses", "/account/addresses"],
 ] as const;
 
