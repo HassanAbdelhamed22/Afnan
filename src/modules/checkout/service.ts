@@ -13,6 +13,7 @@ import { CategoryModel } from "@/modules/categories/model";
 import { ShippingRateModel } from "@/modules/shipping/model";
 import { OrderModel } from "@/modules/orders/model";
 import { sendNewOrderAdminEmail } from "@/modules/email";
+import { invalidatePurchasedProductCaches, type PurchasedProductCacheTarget } from "./cache";
 import type { PlaceOrderInput } from "./schemas";
 
 interface CheckoutCustomer {
@@ -38,6 +39,7 @@ export async function createOrderFromCart(customer: CheckoutCustomer, input: Pla
   const dbSession = await mongoose.startSession();
   let createdOrderNumber = "";
   let emailDetails: { customerName: string; governorateName: string; totalAmount: number } | undefined;
+  const purchasedProducts = new Map<string, PurchasedProductCacheTarget>();
   try {
     await dbSession.withTransaction(async () => {
       const duplicate = await OrderModel.findOne({ checkoutToken: input.checkoutToken }).session(dbSession).select("userId orderNumber").lean<{ userId: string; orderNumber: string }>();
@@ -75,6 +77,11 @@ export async function createOrderFromCart(customer: CheckoutCustomer, input: Pla
           const key = `${product._id}:${variant._id}`;
           const current = stockTotals.get(key);
           stockTotals.set(key, { productId: product._id, variantId: variant._id, quantity: (current?.quantity ?? 0) + cartItem.quantity });
+          purchasedProducts.set(product._id.toString(), {
+            productId: product._id.toString(),
+            productSlug: product.slug,
+            categoryId: product.categoryId.toString(),
+          });
         }
         return {
           productId: product._id, variantId: variant._id, productName: product.name, productSlug: product.slug,
@@ -119,6 +126,11 @@ export async function createOrderFromCart(customer: CheckoutCustomer, input: Pla
   }
 
   if (!createdOrderNumber) throw new InvalidStateError("The order could not be created");
+  try {
+    invalidatePurchasedProductCaches([...purchasedProducts.values()]);
+  } catch {
+    // The order is already committed; cache failure must not report checkout failure.
+  }
   if (emailDetails) {
     await sendNewOrderAdminEmail({ orderNumber: createdOrderNumber, ...emailDetails }).catch(() => undefined);
   }

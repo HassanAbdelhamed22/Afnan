@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ connectMongoose: vi.fn(), orderFindOne: vi.fn() }));
+const mocks = vi.hoisted(() => ({ connectMongoose: vi.fn(), orderFindOne: vi.fn(), invalidatePurchasedProductCaches: vi.fn() }));
 vi.mock("@/lib/mongoose", () => ({ connectMongoose: mocks.connectMongoose }));
 vi.mock("@/modules/orders/model", () => ({ OrderModel: { findOne: mocks.orderFindOne } }));
 vi.mock("@/modules/users/model", () => ({ AddressModel: {} }));
@@ -9,6 +9,7 @@ vi.mock("@/modules/products/model", () => ({ ProductModel: {} }));
 vi.mock("@/modules/categories/model", () => ({ CategoryModel: {} }));
 vi.mock("@/modules/shipping/model", () => ({ ShippingRateModel: {} }));
 vi.mock("@/modules/email", () => ({ sendNewOrderAdminEmail: vi.fn() }));
+vi.mock("@/modules/checkout/cache", () => ({ invalidatePurchasedProductCaches: mocks.invalidatePurchasedProductCaches }));
 
 import { createOrderFromCart } from "@/modules/checkout/service";
 
@@ -23,6 +24,7 @@ describe("checkout idempotency", () => {
   it("returns the existing owned order for a repeated checkout token", async () => {
     mocks.orderFindOne.mockReturnValue(existingResult({ orderNumber: "AF-EXISTING" }));
     await expect(createOrderFromCart(customer, input)).resolves.toBe("AF-EXISTING");
+    expect(mocks.invalidatePurchasedProductCaches).not.toHaveBeenCalled();
   });
 
   it("requires a customer phone before starting a new transaction", async () => {
