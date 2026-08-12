@@ -25,11 +25,14 @@ function optionalValue(value?: string) {
 
 export function AddressBook({ addresses }: { addresses: AddressDTO[] }) {
   const router = useRouter();
+  const addressFormRef = useRef<HTMLFormElement>(null);
   const savedAddressesHeadingRef = useRef<HTMLHeadingElement>(null);
   const [editing, setEditing] = useState<AddressDTO | null>(null);
   const [showForm, setShowForm] = useState(addresses.length === 0);
   const [saveState, saveAction, saving] = useActionState(
     async (previousState: ActionResult<AddressDTO | null>, formData: FormData) => {
+      const submittedValues = new FormData();
+      formData.forEach((value, key) => submittedValues.append(key, value));
       const result = await saveAddressAction(previousState, formData);
       const message = result.ok ? result.message : result.error.message;
       if (message) toast.show(message, result.ok ? "success" : "error");
@@ -44,6 +47,37 @@ export function AddressBook({ addresses }: { addresses: AddressDTO[] }) {
               behavior: "smooth",
               block: "start",
             });
+          });
+        });
+      } else {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            const form = addressFormRef.current;
+            if (!form) return;
+
+            submittedValues.forEach((value, fieldName) => {
+              if (typeof value !== "string") return;
+              const field = form.elements.namedItem(fieldName);
+              if (
+                field instanceof HTMLInputElement ||
+                field instanceof HTMLTextAreaElement ||
+                field instanceof HTMLSelectElement
+              ) {
+                if (field instanceof HTMLInputElement && field.type === "checkbox") {
+                  field.checked = value === "on";
+                } else {
+                  field.value = value;
+                }
+              }
+            });
+
+            const defaultCheckbox = form.elements.namedItem("isDefault");
+            if (
+              defaultCheckbox instanceof HTMLInputElement &&
+              !submittedValues.has("isDefault")
+            ) {
+              defaultCheckbox.checked = false;
+            }
           });
         });
       }
@@ -97,6 +131,7 @@ export function AddressBook({ addresses }: { addresses: AddressDTO[] }) {
       {showForm && (
         <form
           key={editing?.id ?? "new-address"}
+          ref={addressFormRef}
           action={saveAction}
           className="border border-outline-variant bg-surface px-5 py-7 sm:px-8"
           noValidate
