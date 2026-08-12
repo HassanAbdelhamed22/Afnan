@@ -1,6 +1,7 @@
 import { connectMongoose } from "../src/lib/mongoose";
 import { CategoryModel } from "../src/modules/categories/model";
 import { ProductModel } from "../src/modules/products/model";
+import { AddressModel } from "../src/modules/users/model";
 
 async function main() {
   console.log("Connecting to database...");
@@ -12,6 +13,9 @@ async function main() {
 
   await ProductModel.ensureIndexes();
   console.log("Product indexes created.");
+
+  await AddressModel.ensureIndexes();
+  console.log("Address indexes created.");
 
   console.log("All indexes successfully synchronized.");
   process.exit(0);

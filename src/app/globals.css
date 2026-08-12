@@ -133,6 +133,20 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Keep native select popovers aligned with the active editorial theme. */
+.themed-native-select {
+  color-scheme: light;
+}
+
+.dark .themed-native-select {
+  color-scheme: dark;
+}
+
+.themed-native-select option {
+  background-color: var(--surface);
+  color: var(--on-surface);
+}
+
 /* Custom Editorial Typography Utilities */
 @utility display-lg {
   font-family: var(--font-eb-garamond), serif;

@@ -115,6 +115,14 @@ export function MobileMenu() {
                     <span aria-hidden="true" className="text-on-surface-variant">→</span>
                   </Link>
                   <Link
+                    href="/account/addresses"
+                    onClick={closeMenu}
+                    className="flex min-h-11 items-center justify-between px-3 font-sans text-sm font-medium text-on-background no-underline outline-none transition-colors hover:bg-surface-container-low focus-visible:bg-surface-container-low"
+                  >
+                    Delivery Addresses
+                    <span aria-hidden="true" className="text-on-surface-variant">→</span>
+                  </Link>
+                  <Link
                     href="/account/wishlist"
                     onClick={closeMenu}
                     className="flex min-h-11 items-center justify-between px-3 font-sans text-sm font-medium text-on-background no-underline outline-none transition-colors hover:bg-surface-container-low focus-visible:bg-surface-container-low"
