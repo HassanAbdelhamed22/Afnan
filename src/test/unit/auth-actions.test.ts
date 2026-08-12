@@ -104,6 +104,7 @@ describe("Auth Server Actions", () => {
             password: "P@ssword123!",
             phoneE164: "+201012345678",
             whatsappE164: "+201112345678",
+            callbackURL: "http://localhost:3000/login?verified=true",
           },
         })
       );
@@ -217,6 +218,29 @@ describe("Auth Server Actions", () => {
       if (!result.ok) {
         expect(result.error.code).toBe("INVALID_CREDENTIALS");
         expect(result.error.message).toContain("Invalid email or password");
+      }
+    });
+
+    it("should explain that an unverified customer must check their email", async () => {
+      const formData = new FormData();
+      formData.append("email", "hassan@example.com");
+      formData.append("password", "P@ssword123!");
+
+      const mockError = new APIError("FORBIDDEN", {
+        code: "EMAIL_NOT_VERIFIED",
+        message: "Email not verified",
+      });
+      vi.mocked(auth.api.signInEmail).mockRejectedValue(mockError);
+
+      const result = await loginAction(
+        { ok: true, data: { redirectTo: "" } },
+        formData,
+      );
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe("EMAIL_NOT_VERIFIED");
+        expect(result.error.message).toContain("verification link");
       }
     });
   });

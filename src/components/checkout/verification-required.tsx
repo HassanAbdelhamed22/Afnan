@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useEffect } from "react";
 
 import { toast } from "@/components/ui/toast";
+import { ResendVerificationButton } from "@/components/auth/resend-verification-button";
 
-export function CheckoutVerificationRequired() {
+export function CheckoutVerificationRequired({ email }: { email: string }) {
   useEffect(() => {
     toast.show("Verify your email before checkout.", "error");
   }, []);
@@ -17,9 +18,10 @@ export function CheckoutVerificationRequired() {
       <p className="mx-auto mt-4 max-w-xl body-md text-on-surface-variant">
         Verify the email address connected to your account before placing an order.
       </p>
+      <ResendVerificationButton email={email} className="mt-7" />
       <Link
         href="/cart"
-        className="mt-7 inline-flex border border-primary px-6 py-3 label-caps text-primary"
+        className="mt-4 block label-caps text-primary underline underline-offset-4"
       >
         Return to cart
       </Link>

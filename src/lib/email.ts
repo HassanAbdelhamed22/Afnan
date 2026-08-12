@@ -12,6 +12,39 @@ type PasswordResetEmailInput = {
   resetUrl: string;
 };
 
+type VerificationEmailInput = {
+  email: string;
+  name: string;
+  verificationUrl: string;
+};
+
+export async function sendEmailVerificationEmail(
+  input: VerificationEmailInput,
+): Promise<void> {
+  const { error } = await resend.emails.send({
+    from: env.AUTH_EMAIL_FROM,
+    to: input.email,
+    subject: "Verify your Afnan email",
+    html: `
+      <div style="font-family:Arial,sans-serif">
+        <h1>Verify your email</h1>
+        <p>Hello ${escapeHtml(input.name)},</p>
+        <p>Confirm that this email address belongs to you:</p>
+        <p>
+          <a href="${escapeHtml(input.verificationUrl)}">
+            Verify email address
+          </a>
+        </p>
+        <p>This link expires in one hour. If you did not create an Afnan account, ignore this email.</p>
+      </div>
+    `,
+  });
+
+  if (error) {
+    throw new Error("Email verification email failed");
+  }
+}
+
 export async function sendPasswordResetEmail(
   input: PasswordResetEmailInput,
 ): Promise<void> {

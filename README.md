@@ -16,6 +16,21 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+### Custom-request image uploads
+
+Reference images use authenticated, signed Cloudinary uploads. Add these values to
+your local environment and to the deployment environment:
+
+```text
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+```
+
+Never expose `CLOUDINARY_API_SECRET` through a `NEXT_PUBLIC_` variable. Without
+these values, custom requests can still be submitted without images and image
+uploads return a safe configuration error.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

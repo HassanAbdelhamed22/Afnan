@@ -11,6 +11,7 @@ import { useFormValidation } from "@/lib/hooks/use-form-validation";
 import { FormField } from "@/components/ui/form-field";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
+import { ResendVerificationButton } from "@/components/auth/resend-verification-button";
 
 const initialState: ActionResult<{ redirectTo: string }> = {
   ok: true,
@@ -24,9 +25,15 @@ const inputClass =
 
 type LoginFormProps = {
   returnTo?: string;
+  verified?: boolean;
+  verificationError?: boolean;
 };
 
-export function LoginForm({ returnTo = "/" }: LoginFormProps) {
+export function LoginForm({
+  returnTo = "/",
+  verified = false,
+  verificationError = false,
+}: LoginFormProps) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(
     loginAction,
@@ -84,6 +91,14 @@ export function LoginForm({ returnTo = "/" }: LoginFormProps) {
       toast.show("Please sign in first to access that page.", "info");
     }
   }, []);
+
+  useEffect(() => {
+    if (verified) {
+      toast.show("Email verified successfully. You can now sign in.", "success");
+    } else if (verificationError) {
+      toast.show("This verification link is invalid or expired. Request a new one.", "error");
+    }
+  }, [verified, verificationError]);
 
   const serverFieldErrors = !state.ok ? state.error.fieldErrors : undefined;
   const getError = (field: string) =>
@@ -212,9 +227,18 @@ export function LoginForm({ returnTo = "/" }: LoginFormProps) {
       </div>
 
       {!state.ok && (
-        <p role="alert" className="border-l-2 border-error bg-error-container/35 px-3 py-2.5 font-sans text-sm text-error">
-          {state.error.message}
-        </p>
+        <div className="space-y-3">
+          <p role="alert" className="border-l-2 border-error bg-error-container/35 px-3 py-2.5 font-sans text-sm text-error">
+            {state.error.message}
+          </p>
+          {state.error.code === "EMAIL_NOT_VERIFIED" && (
+            <ResendVerificationButton
+              email={values.email}
+              callbackURL={`/login?verified=true&returnTo=${encodeURIComponent(returnTo)}`}
+              className="w-full"
+            />
+          )}
+        </div>
       )}
 
       <Button
