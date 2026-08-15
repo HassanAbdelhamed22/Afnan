@@ -12,6 +12,7 @@ import { FormField } from "@/components/ui/form-field";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { ResendVerificationButton } from "@/components/auth/resend-verification-button";
+import { useSession } from "@/lib/auth/auth-client";
 
 const initialState: ActionResult<{ redirectTo: string }> = {
   ok: true,
@@ -35,6 +36,7 @@ export function LoginForm({
   verificationError = false,
 }: LoginFormProps) {
   const router = useRouter();
+  const { refetch: refetchSession } = useSession();
   const [state, formAction, pending] = useActionState(
     loginAction,
     initialState,
@@ -77,12 +79,20 @@ export function LoginForm({
     } else if (state.message) {
       toast.show(state.message, "success");
       const redirectUrl = state.data.redirectTo;
-      setTimeout(() => {
-        router.push(redirectUrl);
-        router.refresh();
+      let cancelled = false;
+      const timeoutId = window.setTimeout(() => {
+        void refetchSession({ query: { disableCookieCache: true } }).then(() => {
+          if (cancelled) return;
+          router.push(redirectUrl);
+          router.refresh();
+        });
       }, 800);
+      return () => {
+        cancelled = true;
+        window.clearTimeout(timeoutId);
+      };
     }
-  }, [state, setServerErrors, router]);
+  }, [state, setServerErrors, refetchSession, router]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

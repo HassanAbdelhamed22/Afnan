@@ -7,6 +7,7 @@ import { AppError, InvalidStateError, NotFoundError } from "@/lib/errors/app-err
 import { env } from "@/lib/env";
 import { connectMongoose } from "@/lib/mongoose";
 import { UploadIntentModel } from "./model";
+import { buildUploadFolder, type UploadPurpose } from "./paths";
 import type { completeUploadSchema, createUploadIntentSchema } from "./schemas";
 
 function configuration() {
@@ -19,17 +20,14 @@ function sign(parameters: Record<string, string | number>, secret: string) {
   return createHash("sha1").update(canonical + secret).digest("hex");
 }
 
-export async function createUploadIntent(userId: string, input: Omit<z.infer<typeof createUploadIntentSchema>, "purpose"> & { purpose?: "CUSTOM_REQUEST_REFERENCE" | "PRODUCT_IMAGE" }) {
+export async function createUploadIntent(userId: string, input: Omit<z.infer<typeof createUploadIntentSchema>, "purpose"> & { purpose?: UploadPurpose }) {
   const config = configuration();
   const purpose = input.purpose ?? "CUSTOM_REQUEST_REFERENCE";
   await connectMongoose();
   const recentIntentCount = await UploadIntentModel.countDocuments({ userId, createdAt: { $gte: new Date(Date.now() - 60 * 60 * 1000) } });
   if (recentIntentCount >= 20) throw new AppError({ code: "RATE_LIMITED", message: "Too many image uploads. Try again later", statusCode: 429 });
   const timestamp = Math.floor(Date.now() / 1000);
-  const folder =
-    purpose === "PRODUCT_IMAGE"
-      ? `afnan/${env.APP_ENV}/products/${userId}`
-      : `afnan/${env.APP_ENV}/custom-requests/${userId}`;
+  const folder = buildUploadFolder(env.APP_ENV, purpose, userId);
   const uploadPublicId = randomUUID();
   const expectedPublicId = `${folder}/${uploadPublicId}`;
   const intent = await UploadIntentModel.create({ userId, purpose, publicId: expectedPublicId, originalFilename: input.filename, mimeType: input.mimeType, sizeBytes: input.sizeBytes, status: "PENDING", expiresAt: new Date(Date.now() + 30 * 60 * 1000) });

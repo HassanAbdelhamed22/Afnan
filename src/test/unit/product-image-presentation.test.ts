@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createUploadIntentSchema } from "@/modules/uploads/schemas";
 import { resolveMediaUrl, type MediaAsset } from "@/modules/uploads/types";
 
-const original: MediaAsset = { url: "https://res.cloudinary.com/demo/image/upload/original.png", publicId: "afnan/products/admin/image", enhancedUrl: "https://res.cloudinary.com/demo/image/upload/e_background_removal/original.png" };
+const original: MediaAsset = { url: "https://res.cloudinary.com/demo/image/upload/original.png", publicId: "afnan/test/products/admin/image", enhancedUrl: "https://res.cloudinary.com/demo/image/upload/e_background_removal/original.png" };
 
 describe("product image presentation", () => {
   it("uses enhanced media only when ready and explicitly approved", () => {

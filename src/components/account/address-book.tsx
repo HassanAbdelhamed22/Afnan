@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog } from "@/components/ui/dialog";
 import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
@@ -247,15 +248,12 @@ export function AddressBook({ addresses }: { addresses: AddressDTO[] }) {
             </FormField>
           </div>
 
-          <label className="mt-7 flex cursor-pointer items-center gap-3 body-sm text-on-background">
-            <input
-              type="checkbox"
-              name="isDefault"
-              defaultChecked={editing?.isDefault ?? addresses.length === 0}
-              className="size-4 appearance-none border border-primary checked:bg-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-            />
-            Use as my default delivery address
-          </label>
+          <Checkbox
+            name="isDefault"
+            label="Use as my default delivery address"
+            defaultChecked={editing?.isDefault ?? addresses.length === 0}
+            className="mt-7"
+          />
 
           {!saveState.ok && !saveState.error.fieldErrors && (
             <p role="alert" className="mt-6 border-l-2 border-error bg-error-container/30 px-4 py-3 body-sm text-error">

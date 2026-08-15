@@ -2,7 +2,7 @@ import { createHash } from "crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ connectMongoose: vi.fn(), countDocuments: vi.fn(), create: vi.fn(), findOne: vi.fn() }));
-vi.mock("@/lib/env", () => ({ env: { CLOUDINARY_CLOUD_NAME: "afnan-cloud", CLOUDINARY_API_KEY: "key", CLOUDINARY_API_SECRET: "secret" } }));
+vi.mock("@/lib/env", () => ({ env: { APP_ENV: "test", CLOUDINARY_CLOUD_NAME: "afnan-cloud", CLOUDINARY_API_KEY: "key", CLOUDINARY_API_SECRET: "secret" } }));
 vi.mock("@/lib/mongoose", () => ({ connectMongoose: mocks.connectMongoose }));
 vi.mock("@/modules/uploads/model", () => ({ UploadIntentModel: { countDocuments: mocks.countDocuments, create: mocks.create, findOne: mocks.findOne } }));
 
@@ -19,8 +19,15 @@ describe("secure upload intents", () => {
   it("creates a short-lived owner-scoped signed upload", async () => {
     const result = await createUploadIntent("customer-1", { filename: "idea.png", mimeType: "image/png", sizeBytes: 1000 });
     expect(mocks.create).toHaveBeenCalledWith(expect.objectContaining({ userId: "customer-1", purpose: "CUSTOM_REQUEST_REFERENCE", status: "PENDING", expiresAt: expect.any(Date) }));
-    expect(result).toMatchObject({ cloudName: "afnan-cloud", apiKey: "key", intentId: "507f1f77bcf86cd799439011" });
+    expect(result).toMatchObject({ cloudName: "afnan-cloud", apiKey: "key", intentId: "507f1f77bcf86cd799439011", folder: "afnan/test/custom-requests/customer-1" });
     expect(result.signature).toMatch(/^[a-f\d]{40}$/);
+  });
+
+  it("creates product uploads in the environment-scoped product folder", async () => {
+    const result = await createUploadIntent("admin-1", { filename: "product.png", mimeType: "image/png", sizeBytes: 1000, purpose: "PRODUCT_IMAGE" });
+
+    expect(result.folder).toBe("afnan/test/products/admin-1");
+    expect(mocks.create).toHaveBeenCalledWith(expect.objectContaining({ userId: "admin-1", purpose: "PRODUCT_IMAGE", publicId: expect.stringMatching(/^afnan\/test\/products\/admin-1\//) }));
   });
 
   it("verifies Cloudinary completion under the authenticated owner", async () => {

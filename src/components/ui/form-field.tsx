@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 export interface FormFieldProps extends React.HTMLAttributes<HTMLDivElement> {
   label?: string;
   htmlFor?: string;
+  hint?: string;
   error?: string;
   children: React.ReactNode;
 }
@@ -13,21 +14,44 @@ export function FormField({
   className,
   label,
   htmlFor,
+  hint,
   error,
   children,
   ...props
 }: FormFieldProps) {
   const errorId = htmlFor ? `${htmlFor}-error` : undefined;
+  const hintId = React.useId();
 
   return (
     <div className={cn("flex flex-col gap-1.5 w-full", className)} {...props}>
       {label && (
-        <label
-          htmlFor={htmlFor}
-          className="font-sans text-[0.6875rem] font-semibold uppercase leading-none tracking-[0.12em] text-on-background/65"
-        >
-          {label}
-        </label>
+        <div className="flex items-center gap-2">
+          <label
+            htmlFor={htmlFor}
+            className="font-sans text-[0.6875rem] font-semibold uppercase leading-none tracking-[0.12em] text-on-background/65"
+          >
+            {label}
+          </label>
+          {hint ? (
+            <span className="group relative inline-flex">
+              <button
+                type="button"
+                aria-label={`Help for ${label}`}
+                aria-describedby={hintId}
+                className="inline-flex size-5 items-center justify-center rounded-full border border-outline text-[0.6875rem] font-bold leading-none text-on-surface-variant outline-none transition-colors hover:border-primary hover:text-primary focus-visible:border-primary focus-visible:text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+              >
+                ?
+              </button>
+              <span
+                id={hintId}
+                role="tooltip"
+                className="pointer-events-none invisible absolute bottom-full left-0 z-30 mb-2 w-64 border border-outline-variant bg-on-background px-3 py-2 font-sans text-xs font-normal normal-case leading-5 tracking-normal text-background opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 sm:left-1/2 sm:-translate-x-1/2"
+              >
+                {hint}
+              </span>
+            </span>
+          ) : null}
+        </div>
       )}
       {children}
       {error && (

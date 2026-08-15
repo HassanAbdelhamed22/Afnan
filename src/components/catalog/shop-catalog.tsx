@@ -5,6 +5,7 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { type ProductCardDTO, type CategoryDTO } from "@/modules/catalog/dto";
 import { ProductCard } from "@/components/shared/product-card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Drawer } from "@/components/ui/drawer";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Pagination } from "@/components/ui/pagination";
@@ -192,19 +193,13 @@ export function ShopCatalog({
         <h3 className="font-sans text-[0.625rem] font-bold uppercase tracking-[0.2em] text-on-surface-variant mb-4">
           Availability
         </h3>
-        <label className="flex items-center gap-3 cursor-pointer group">
-          <input
-            type="checkbox"
-            checked={activeAvailability === "IN_STOCK"}
-            onChange={(e) =>
-              updateQuery({ availability: e.target.checked ? "IN_STOCK" : null })
-            }
-            className="size-4 rounded-none border border-outline-variant bg-transparent text-primary focus:ring-0 focus:ring-offset-0 cursor-pointer accent-primary"
-          />
-          <span className="font-sans text-sm text-on-surface group-hover:text-primary transition-colors">
-            In stock only
-          </span>
-        </label>
+        <Checkbox
+          label="In stock only"
+          checked={activeAvailability === "IN_STOCK"}
+          onChange={(e) =>
+            updateQuery({ availability: e.target.checked ? "IN_STOCK" : null })
+          }
+        />
       </div>
 
       {/* Fulfillment Type */}
@@ -217,19 +212,14 @@ export function ShopCatalog({
             { label: "Ready-made", value: "READY_MADE" },
             { label: "Made-to-order", value: "MADE_TO_ORDER" },
           ].map((type) => (
-            <label key={type.value} className="flex items-center gap-3 cursor-pointer group">
-              <input
-                type="checkbox"
-                checked={activeFulfillment === type.value}
-                onChange={(e) =>
-                  updateQuery({ fulfillment: e.target.checked ? type.value : null })
-                }
-                className="size-4 rounded-none border border-outline-variant bg-transparent text-primary focus:ring-0 focus:ring-offset-0 cursor-pointer accent-primary"
-              />
-              <span className="font-sans text-sm text-on-surface group-hover:text-primary transition-colors">
-                {type.label}
-              </span>
-            </label>
+            <Checkbox
+              key={type.value}
+              label={type.label}
+              checked={activeFulfillment === type.value}
+              onChange={(e) =>
+                updateQuery({ fulfillment: e.target.checked ? type.value : null })
+              }
+            />
           ))}
         </div>
       </div>
@@ -289,19 +279,14 @@ export function ShopCatalog({
           </h3>
           <div className="flex flex-col gap-3 max-h-48 overflow-y-auto pr-2">
             {materials.map((material) => (
-              <label key={material} className="flex items-center gap-3 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  checked={activeMaterial === material}
-                  onChange={(e) =>
-                    updateQuery({ material: e.target.checked ? material : null })
-                  }
-                  className="size-4 rounded-none border border-outline-variant bg-transparent text-primary focus:ring-0 focus:ring-offset-0 cursor-pointer accent-primary"
-                />
-                <span className="font-sans text-sm text-on-surface group-hover:text-primary transition-colors">
-                  {material}
-                </span>
-              </label>
+              <Checkbox
+                key={material}
+                label={material}
+                checked={activeMaterial === material}
+                onChange={(e) =>
+                  updateQuery({ material: e.target.checked ? material : null })
+                }
+              />
             ))}
           </div>
         </div>

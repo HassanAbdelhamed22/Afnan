@@ -7,9 +7,11 @@ import { ConflictError, InvalidStateError, NotFoundError } from "@/lib/errors/ap
 import { env } from "@/lib/env";
 import { connectMongoose } from "@/lib/mongoose";
 import { UploadIntentModel } from "@/modules/uploads/model";
+import { isOwnedUploadPublicId, isProductImagePublicId } from "@/modules/uploads/paths";
 import { MAX_PRODUCT_IMAGES } from "@/modules/uploads/schemas";
 import type { MediaAsset } from "@/modules/uploads/types";
 
+import { buildAttachedProductImage } from "./image-mapping";
 import { ProductModel } from "./model";
 
 function cloudinaryConfiguration() {
@@ -39,12 +41,11 @@ export async function attachProductImage(adminId: string, productId: string, int
       if (!product) throw new NotFoundError("Product not found");
       if (product.images.length >= MAX_PRODUCT_IMAGES) throw new InvalidStateError(`Products support up to ${MAX_PRODUCT_IMAGES} images`);
       const intent = await UploadIntentModel.findOne({ _id: new Types.ObjectId(intentId), userId: adminId, purpose: "PRODUCT_IMAGE", status: "COMPLETED", expiresAt: { $gt: new Date() } }).session(session);
-      if (!intent?.asset || !intent.asset.bytes || !intent.asset.format || !intent.asset.width || !intent.asset.height || !intent.asset.publicId.startsWith("afnan/products/")) throw new InvalidStateError("Product image upload is incomplete or untrusted");
+      if (!intent?.asset?.url || !intent.asset.bytes || !intent.asset.format || !intent.asset.width || !intent.asset.height || !isOwnedUploadPublicId(intent.asset.publicId, env.APP_ENV, "PRODUCT_IMAGE", adminId)) throw new InvalidStateError("Product image upload is incomplete or untrusted");
       if (product.images.some((image: MediaAsset) => image.publicId === intent.asset?.publicId)) throw new ConflictError("This product image is already attached");
       const claimed = await UploadIntentModel.updateOne({ _id: intent._id, userId: adminId, status: "COMPLETED" }, { $set: { status: "CLAIMED" } }, { session });
       if (claimed.modifiedCount !== 1) throw new ConflictError("Product image was already used");
-      const first = product.images.length === 0;
-      product.images.push({ ...intent.asset, alt, sortOrder: product.images.length, isPrimary: first, presentation: { source: "ORIGINAL", backgroundRemovalRequested: false, backgroundRemovalStatus: "NOT_REQUESTED", enhancedApproved: false, backgroundColor: "#F7F7F5", aspectRatio: "4:5" } });
+      product.images.push(buildAttachedProductImage(intent.asset, alt, product.images.length));
       await product.save({ session });
       result = { id: product._id.toString(), slug: product.slug, categoryId: product.categoryId.toString() };
     });
@@ -89,7 +90,7 @@ export async function requestProductImageEnhancement(productId: string, publicId
   const product = await ProductModel.findById(productId);
   if (!product) throw new NotFoundError("Product not found");
   const image = product.images.find((candidate: MediaAsset) => candidate.publicId === publicId);
-  if (!image || !image.publicId.startsWith("afnan/products/")) throw new NotFoundError("Product image not found");
+  if (!image || !isProductImagePublicId(image.publicId, env.APP_ENV)) throw new NotFoundError("Product image not found");
   if (image.presentation?.backgroundRemovalStatus === "PROCESSING") throw new ConflictError("Background removal is already processing");
   image.presentation = { source: "ORIGINAL", backgroundRemovalRequested: true, backgroundRemovalStatus: "PROCESSING", enhancedApproved: false, backgroundColor: "#F7F7F5", aspectRatio: "4:5" };
   image.enhancedUrl = trustedEnhancedUrl(image.url);
