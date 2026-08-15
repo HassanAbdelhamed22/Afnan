@@ -1,0 +1,5 @@
+import { z } from "zod";
+export const adminOrderFiltersSchema = z.object({ search: z.string().trim().max(100).default(""), status: z.enum(["ALL", "PENDING_CONFIRMATION", "CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"]).default("ALL"), whatsapp: z.enum(["ALL", "NOT_CONTACTED", "CONTACTED", "CONFIRMED", "NO_RESPONSE", "REJECTED"]).default("ALL"), sort: z.enum(["priority", "newest", "oldest"]).default("priority"), page: z.coerce.number().int().min(1).default(1), limit: z.coerce.number().int().min(1).max(50).default(20) });
+export const transitionOrderInputSchema = z.object({ orderNumber: z.string().trim().min(3).max(80), status: z.enum(["CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"]), note: z.string().trim().max(1000).optional() });
+export const whatsappResultInputSchema = z.object({ orderNumber: z.string().trim().min(3).max(80), result: z.enum(["CONTACTED", "CONFIRMED", "NO_RESPONSE", "REJECTED"]), note: z.string().trim().max(1000).optional() });
+export type AdminOrderFilters = z.infer<typeof adminOrderFiltersSchema>;

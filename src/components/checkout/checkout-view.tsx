@@ -15,6 +15,7 @@ export function CheckoutView({ checkout }: { checkout: CheckoutDTO }) {
   const defaultAddress = checkout.addresses.find((address) => address.isDefault && address.shippingRate) ?? checkout.addresses.find((address) => address.shippingRate);
   const [addressId, setAddressId] = useState(defaultAddress?.id ?? "");
   const [pending, startTransition] = useTransition();
+  const [customerNote, setCustomerNote] = useState("");
   const selectedAddress = useMemo(() => checkout.addresses.find((address) => address.id === addressId), [addressId, checkout.addresses]);
   const shippingFee = selectedAddress?.shippingRate?.feeAmount ?? 0;
   const total = checkout.cart.subtotalAmount + shippingFee;
@@ -22,7 +23,7 @@ export function CheckoutView({ checkout }: { checkout: CheckoutDTO }) {
   const placeOrder = () => {
     startTransition(async () => {
       try {
-        const result = await placeOrderAction({ addressId, checkoutToken: checkout.checkoutToken, paymentMethod: "CASH_ON_DELIVERY" });
+        const result = await placeOrderAction({ addressId, checkoutToken: checkout.checkoutToken, paymentMethod: "CASH_ON_DELIVERY", customerNote: customerNote || undefined });
         if (!result.ok) {
           toast.show(result.error.message, "error");
           return;
@@ -62,6 +63,7 @@ export function CheckoutView({ checkout }: { checkout: CheckoutDTO }) {
           </div>
         )}
         <div className="mt-10 border-t border-outline-variant pt-7"><h2 className="headline-sm">Payment</h2><div className="mt-5 border border-primary bg-surface-container-low p-5"><strong>Cash on delivery</strong><p className="mt-2 body-sm text-on-surface-variant">We will contact you through WhatsApp to confirm the order before processing.</p></div></div>
+        <label className="mt-8 block"><span className="label-caps">Order note (optional)</span><textarea value={customerNote} maxLength={500} onChange={(event) => setCustomerNote(event.target.value)} rows={3} className="mt-2 w-full border-b border-outline-variant bg-transparent py-2 body-md outline-none focus:border-primary" placeholder="Delivery or personalization details for this order" /></label>
       </section>
 
       <aside className="border border-outline-variant bg-surface p-6 lg:sticky lg:top-28">

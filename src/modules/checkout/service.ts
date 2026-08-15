@@ -111,6 +111,7 @@ export async function createOrderFromCart(customer: CheckoutCustomer, input: Pla
         customerSnapshot: { name: customer.name, email: customer.email, phoneE164: customerPhone, whatsappE164: customer.whatsappE164 || customerPhone },
         addressSnapshot: { recipientName: address.recipientName, phoneE164: address.phoneE164, governorateCode: address.governorateCode, governorateName: rate.governorateName, city: address.city, area: address.area, street: address.street, building: address.building, floor: address.floor, apartment: address.apartment, landmark: address.landmark, notes: address.notes },
         items: snapshots, subtotalAmount, shippingFeeAmount: rate.feeAmount, totalAmount: subtotalAmount + rate.feeAmount, currency: "EGP",
+        customerNote: input.customerNote, statusHistory: [{ status: "PENDING_CONFIRMATION", timestamp: new Date(), actorId: customer.id }], stockRestored: false,
       });
       await order.save({ session: dbSession });
       await CartModel.updateOne({ userId: customer.id }, { $set: { items: [] } }, { session: dbSession });
