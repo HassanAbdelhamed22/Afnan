@@ -26,7 +26,10 @@ export async function createUploadIntent(userId: string, input: Omit<z.infer<typ
   const recentIntentCount = await UploadIntentModel.countDocuments({ userId, createdAt: { $gte: new Date(Date.now() - 60 * 60 * 1000) } });
   if (recentIntentCount >= 20) throw new AppError({ code: "RATE_LIMITED", message: "Too many image uploads. Try again later", statusCode: 429 });
   const timestamp = Math.floor(Date.now() / 1000);
-  const folder = purpose === "PRODUCT_IMAGE" ? `afnan/products/${userId}` : `afnan/custom-requests/${userId}`;
+  const folder =
+    purpose === "PRODUCT_IMAGE"
+      ? `afnan/${env.APP_ENV}/products/${userId}`
+      : `afnan/${env.APP_ENV}/custom-requests/${userId}`;
   const uploadPublicId = randomUUID();
   const expectedPublicId = `${folder}/${uploadPublicId}`;
   const intent = await UploadIntentModel.create({ userId, purpose, publicId: expectedPublicId, originalFilename: input.filename, mimeType: input.mimeType, sizeBytes: input.sizeBytes, status: "PENDING", expiresAt: new Date(Date.now() + 30 * 60 * 1000) });
