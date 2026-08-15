@@ -7,7 +7,7 @@ import { AppError, InvalidStateError, NotFoundError } from "@/lib/errors/app-err
 import { env } from "@/lib/env";
 import { connectMongoose } from "@/lib/mongoose";
 import { UploadIntentModel } from "./model";
-import { buildUploadFolder, type UploadPurpose } from "./paths";
+import { buildUploadFolder, isOwnedUploadPublicId, isUploadPurposePublicId, type UploadPurpose } from "./paths";
 import type { completeUploadSchema, createUploadIntentSchema } from "./schemas";
 
 function configuration() {
@@ -18,6 +18,25 @@ function configuration() {
 function sign(parameters: Record<string, string | number>, secret: string) {
   const canonical = Object.entries(parameters).sort(([a], [b]) => a.localeCompare(b)).map(([key, value]) => `${key}=${value}`).join("&");
   return createHash("sha1").update(canonical + secret).digest("hex");
+}
+
+async function destroyCloudinaryImage(publicId: string) {
+  const config = configuration();
+  const timestamp = Math.floor(Date.now() / 1000);
+  const parameters = { invalidate: "true", public_id: publicId, timestamp };
+  const form = new URLSearchParams({
+    ...Object.fromEntries(Object.entries(parameters).map(([key, value]) => [key, String(value)])),
+    api_key: config.apiKey,
+    signature: sign(parameters, config.apiSecret),
+  });
+  const response = await fetch(`https://api.cloudinary.com/v1_1/${config.cloudName}/image/destroy`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: form,
+    cache: "no-store",
+  });
+  const payload = await response.json() as { result?: string };
+  if (!response.ok || !["ok", "not found"].includes(payload.result ?? "")) throw new InvalidStateError("Uploaded image cleanup failed");
 }
 
 export async function createUploadIntent(userId: string, input: Omit<z.infer<typeof createUploadIntentSchema>, "purpose"> & { purpose?: UploadPurpose }) {
@@ -56,7 +75,37 @@ export async function completeUploadIntent(userId: string, input: z.infer<typeof
 
 export async function getUploadIntentPurpose(userId: string, intentId: string) {
   await connectMongoose();
-  const intent = await UploadIntentModel.findOne({ _id: new Types.ObjectId(intentId), userId }).select("purpose").lean<{ purpose: "CUSTOM_REQUEST_REFERENCE" | "PRODUCT_IMAGE" }>();
+  const intent = await UploadIntentModel.findOne({ _id: new Types.ObjectId(intentId), userId }).select("purpose").lean<{ purpose: UploadPurpose }>();
   if (!intent) throw new NotFoundError("Upload intent not found");
   return intent.purpose;
+}
+
+export async function discardUploadIntent(userId: string, intentId: string, expectedPurpose?: UploadPurpose) {
+  if (!Types.ObjectId.isValid(intentId)) return false;
+  await connectMongoose();
+  const intent = await UploadIntentModel.findOne({
+    _id: new Types.ObjectId(intentId),
+    userId,
+    status: { $in: ["PENDING", "COMPLETED"] },
+    ...(expectedPurpose ? { purpose: expectedPurpose } : {}),
+  });
+  if (!intent) return false;
+  if (!isOwnedUploadPublicId(intent.publicId, env.APP_ENV, intent.purpose, userId)) throw new InvalidStateError("Upload intent is outside the managed asset folder");
+  const previousStatus = intent.status;
+  const reserved = await UploadIntentModel.updateOne({ _id: intent._id, userId, status: previousStatus }, { $set: { status: "DISCARDING" } });
+  if (reserved.modifiedCount !== 1) return false;
+  try {
+    await destroyCloudinaryImage(intent.publicId);
+    await UploadIntentModel.deleteOne({ _id: intent._id, userId, status: "DISCARDING" });
+    return true;
+  } catch (error) {
+    await UploadIntentModel.updateOne({ _id: intent._id, userId, status: "DISCARDING" }, { $set: { status: previousStatus } });
+    throw error;
+  }
+}
+
+export async function deleteManagedUploadAsset(publicId: string, purpose: UploadPurpose) {
+  if (!isUploadPurposePublicId(publicId, env.APP_ENV, purpose)) return false;
+  await destroyCloudinaryImage(publicId);
+  return true;
 }

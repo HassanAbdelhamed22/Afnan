@@ -3,15 +3,16 @@ import "server-only";
 import { Schema, model, models, type Document, type Model } from "mongoose";
 import { MediaAssetSchema } from "./schema";
 import type { MediaAsset } from "./types";
+import type { UploadPurpose } from "./paths";
 
 export interface IUploadIntent extends Document {
   userId: string;
-  purpose: "CUSTOM_REQUEST_REFERENCE" | "PRODUCT_IMAGE";
+  purpose: UploadPurpose;
   publicId: string;
   originalFilename: string;
   mimeType: string;
   sizeBytes: number;
-  status: "PENDING" | "COMPLETED" | "CLAIMED";
+  status: "PENDING" | "COMPLETED" | "CLAIMED" | "DISCARDING";
   asset?: MediaAsset;
   expiresAt: Date;
   createdAt: Date;
@@ -20,10 +21,10 @@ export interface IUploadIntent extends Document {
 
 const UploadIntentSchema = new Schema<IUploadIntent>({
   userId: { type: String, required: true },
-  purpose: { type: String, enum: ["CUSTOM_REQUEST_REFERENCE", "PRODUCT_IMAGE"], required: true },
+  purpose: { type: String, enum: ["CATEGORY_IMAGE", "CUSTOM_REQUEST_REFERENCE", "PRODUCT_IMAGE"], required: true },
   publicId: { type: String, required: true }, originalFilename: { type: String, required: true },
   mimeType: { type: String, required: true }, sizeBytes: { type: Number, required: true },
-  status: { type: String, enum: ["PENDING", "COMPLETED", "CLAIMED"], required: true, default: "PENDING" },
+  status: { type: String, enum: ["PENDING", "COMPLETED", "CLAIMED", "DISCARDING"], required: true, default: "PENDING" },
   asset: MediaAssetSchema, expiresAt: { type: Date, required: true },
 }, { timestamps: true });
 

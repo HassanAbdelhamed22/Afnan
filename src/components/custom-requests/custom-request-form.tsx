@@ -8,26 +8,10 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
 import { createCustomRequestAction } from "@/modules/custom-requests/actions";
 import { customRequestSchema } from "@/modules/custom-requests/schemas";
+import { discardClientUpload, uploadManagedImage } from "@/modules/uploads/client";
 import { CUSTOM_REQUEST_IMAGE_TYPES, MAX_CUSTOM_REQUEST_IMAGES, MAX_CUSTOM_REQUEST_IMAGE_BYTES } from "@/modules/uploads/schemas";
 
 type FieldErrors = Record<string, string[]>;
-type ApiPayload<T> = { success: true; data: T } | { success: false; error: { message: string } };
-
-async function uploadReference(file: File): Promise<string> {
-  const signResponse = await fetch("/api/uploads/sign", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ filename: file.name, mimeType: file.type, sizeBytes: file.size }) });
-  const signed = await signResponse.json() as ApiPayload<{ intentId: string; cloudName: string; apiKey: string; timestamp: number; folder: string; publicId: string; signature: string }>;
-  if (!signed.success) throw new Error(signed.error.message);
-  const form = new FormData();
-  form.set("file", file); form.set("api_key", signed.data.apiKey); form.set("timestamp", String(signed.data.timestamp));
-  form.set("folder", signed.data.folder); form.set("public_id", signed.data.publicId); form.set("signature", signed.data.signature);
-  const uploadResponse = await fetch(`https://api.cloudinary.com/v1_1/${signed.data.cloudName}/image/upload`, { method: "POST", body: form });
-  const uploaded = await uploadResponse.json() as { public_id?: string; version?: number; signature?: string; secure_url?: string; width?: number; height?: number; bytes?: number; format?: string; error?: { message?: string } };
-  if (!uploadResponse.ok || !uploaded.public_id || !uploaded.version || !uploaded.signature || !uploaded.secure_url || !uploaded.width || !uploaded.height || !uploaded.bytes || !uploaded.format) throw new Error(uploaded.error?.message ?? "Image upload failed");
-  const completeResponse = await fetch("/api/uploads/complete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ intentId: signed.data.intentId, publicId: uploaded.public_id, version: uploaded.version, signature: uploaded.signature }) });
-  const completed = await completeResponse.json() as ApiPayload<{ intentId: string }>;
-  if (!completed.success) throw new Error(completed.error.message);
-  return completed.data.intentId;
-}
 
 export function CustomRequestForm() {
   const router = useRouter();
@@ -53,15 +37,16 @@ export function CustomRequestForm() {
       return;
     }
     startTransition(async () => {
+      const uploadIntentIds: string[] = [];
       try {
-        const uploadIntentIds: string[] = [];
         for (const [index, file] of files.entries()) {
           setProgress(`Uploading image ${index + 1} of ${files.length}…`);
-          uploadIntentIds.push(await uploadReference(file));
+          uploadIntentIds.push(await uploadManagedImage(file, "CUSTOM_REQUEST_REFERENCE"));
         }
         setProgress("Submitting your request…");
         const result = await createCustomRequestAction({ ...baseInput, uploadIntentIds });
         if (!result.ok) {
+          await Promise.all(uploadIntentIds.map((intentId) => discardClientUpload(intentId).catch(() => undefined)));
           setErrors(result.error.fieldErrors ?? {});
           toast.show(result.error.message, "error");
           return;
@@ -69,6 +54,7 @@ export function CustomRequestForm() {
         toast.show(result.message ?? "Custom request submitted", "success");
         router.push(`/account/custom-requests?submitted=${encodeURIComponent(result.data.requestNumber)}`);
       } catch (error) {
+        await Promise.all(uploadIntentIds.map((intentId) => discardClientUpload(intentId).catch(() => undefined)));
         toast.show(error instanceof Error ? error.message : "The request could not be submitted", "error");
       } finally {
         setProgress("");

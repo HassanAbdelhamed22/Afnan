@@ -26,7 +26,7 @@ export async function listAdminCategories(filters: CategoryAdminFilters): Promis
   const sorts = { order: { sortOrder: 1 as const, name: 1 as const }, name: { name: 1 as const }, newest: { updatedAt: -1 as const } };
   const skip = (filters.page - 1) * filters.limit;
   const [records, total] = await Promise.all([
-    CategoryModel.find(query).select("name slug description sortOrder isActive updatedAt").sort(sorts[filters.sort]).skip(skip).limit(filters.limit).lean(),
+    CategoryModel.find(query).select("name slug description image sortOrder isActive updatedAt").sort(sorts[filters.sort]).skip(skip).limit(filters.limit).lean(),
     CategoryModel.countDocuments(query),
   ]);
   const ids = records.map((record) => record._id);
@@ -39,6 +39,7 @@ export async function listAdminCategories(filters: CategoryAdminFilters): Promis
     categories: records.map((record) => {
       const count = countMap.get(record._id.toString());
       return { id: record._id.toString(), name: record.name, slug: record.slug, description: record.description,
+        image: record.image ? { url: record.image.url, publicId: record.image.publicId, width: record.image.width, height: record.image.height, bytes: record.image.bytes, format: record.image.format, alt: record.image.alt } : undefined,
         sortOrder: record.sortOrder, isActive: record.isActive, productCount: count?.total ?? 0,
         activeProductCount: count?.active ?? 0, updatedAt: record.updatedAt.toISOString() };
     }),
@@ -49,12 +50,13 @@ export async function listAdminCategories(filters: CategoryAdminFilters): Promis
 export async function getAdminCategory(categoryId: string): Promise<AdminCategoryDTO> {
   if (!isValidObjectId(categoryId)) throw new NotFoundError("Category not found");
   await connectMongoose();
-  const record = await CategoryModel.findById(categoryId).select("name slug description sortOrder isActive updatedAt").lean();
+  const record = await CategoryModel.findById(categoryId).select("name slug description image sortOrder isActive updatedAt").lean();
   if (!record) throw new NotFoundError("Category not found");
   const [productCount, activeProductCount] = await Promise.all([
     ProductModel.countDocuments({ categoryId: record._id }), ProductModel.countDocuments({ categoryId: record._id, status: "ACTIVE" }),
   ]);
   return { id: record._id.toString(), name: record.name, slug: record.slug, description: record.description,
+    image: record.image ? { url: record.image.url, publicId: record.image.publicId, width: record.image.width, height: record.image.height, bytes: record.image.bytes, format: record.image.format, alt: record.image.alt } : undefined,
     sortOrder: record.sortOrder, isActive: record.isActive, productCount, activeProductCount, updatedAt: record.updatedAt.toISOString() };
 }
 

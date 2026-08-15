@@ -9,6 +9,6 @@ export const POST = withApiHandler(async (request) => {
   const session = await requireUser();
   const parsed = completeUploadSchema.safeParse(await request.json());
   if (!parsed.success) throw new AppError({ code: "VALIDATION_ERROR", message: "Upload completion data is invalid", statusCode: 400 });
-  if (await getUploadIntentPurpose(session.user.id, parsed.data.intentId) === "PRODUCT_IMAGE") await requireAdmin();
+  if (await getUploadIntentPurpose(session.user.id, parsed.data.intentId) !== "CUSTOM_REQUEST_REFERENCE") await requireAdmin();
   return apiSuccess(await completeUploadIntent(session.user.id, parsed.data));
 });

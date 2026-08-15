@@ -8,24 +8,10 @@ import { Button } from "@/components/ui/button";
 import type { ActionResult } from "@/lib/results/action-result";
 import type { MediaAsset } from "@/modules/uploads/types";
 import { MAX_PRODUCT_IMAGE_BYTES, MAX_PRODUCT_IMAGES, PRODUCT_IMAGE_TYPES } from "@/modules/uploads/schemas";
+import { discardClientUpload, uploadManagedImage } from "@/modules/uploads/client";
 import { approveProductImageAction, attachProductImageAction, orderProductImageAction, removeProductImageAction, requestProductImageEnhancementAction } from "@/modules/products/image-actions";
 
-type ApiPayload<T> = { success: true; data: T } | { success: false; error: { message: string } };
 type ImageAction = (formData: FormData) => Promise<ActionResult<{ productId: string } | null>>;
-
-async function uploadProductImage(file: File) {
-  const signedResponse = await fetch("/api/uploads/sign", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ filename: file.name, mimeType: file.type, sizeBytes: file.size, purpose: "PRODUCT_IMAGE" }) });
-  const signed = await signedResponse.json() as ApiPayload<{ intentId: string; cloudName: string; apiKey: string; timestamp: number; folder: string; publicId: string; signature: string }>;
-  if (!signed.success) throw new Error(signed.error.message);
-  const upload = new FormData(); upload.set("file", file); upload.set("api_key", signed.data.apiKey); upload.set("timestamp", String(signed.data.timestamp)); upload.set("folder", signed.data.folder); upload.set("public_id", signed.data.publicId); upload.set("signature", signed.data.signature);
-  const providerResponse = await fetch(`https://api.cloudinary.com/v1_1/${signed.data.cloudName}/image/upload`, { method: "POST", body: upload });
-  const provider = await providerResponse.json() as { public_id?: string; version?: number; signature?: string; error?: { message?: string } };
-  if (!providerResponse.ok || !provider.public_id || !provider.version || !provider.signature) throw new Error(provider.error?.message ?? "Product image upload failed");
-  const completeResponse = await fetch("/api/uploads/complete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ intentId: signed.data.intentId, publicId: provider.public_id, version: provider.version, signature: provider.signature }) });
-  const completed = await completeResponse.json() as ApiPayload<{ intentId: string }>;
-  if (!completed.success) throw new Error(completed.error.message);
-  return completed.data.intentId;
-}
 
 function ImageActionButton({ action, fields, children, disabled }: { action: ImageAction; fields: Record<string, string>; children: string; disabled?: boolean }) {
   const router = useRouter(); const [pending, startTransition] = useTransition(); const [error, setError] = useState("");
@@ -36,8 +22,9 @@ export function ProductImageManager({ productId, images }: { productId: string; 
   const router = useRouter(); const [file, setFile] = useState<File>(); const [alt, setAlt] = useState(""); const [pending, startTransition] = useTransition(); const [message, setMessage] = useState("");
   const add = () => startTransition(async () => {
     if (!file || alt.trim().length < 3) { setMessage("Choose an image and provide meaningful alt text."); return; }
-    try { setMessage("Uploading original image…"); const intentId = await uploadProductImage(file); const form = new FormData(); form.set("productId", productId); form.set("intentId", intentId); form.set("alt", alt); const result = await attachProductImageAction(form); if (!result.ok) throw new Error(result.error.message); setFile(undefined); setAlt(""); setMessage(result.message ?? "Image attached"); router.refresh(); }
-    catch (error) { setMessage(error instanceof Error ? error.message : "Product image could not be attached"); }
+    let intentId: string | undefined;
+    try { setMessage("Uploading original image…"); intentId = await uploadManagedImage(file, "PRODUCT_IMAGE"); const form = new FormData(); form.set("productId", productId); form.set("intentId", intentId); form.set("alt", alt); const result = await attachProductImageAction(form); if (!result.ok) throw new Error(result.error.message); setFile(undefined); setAlt(""); setMessage(result.message ?? "Image attached"); router.refresh(); }
+    catch (error) { if (intentId) await discardClientUpload(intentId).catch(() => undefined); setMessage(error instanceof Error ? error.message : "Product image could not be attached"); }
   });
   return (
     <section className="mt-10 border border-outline-variant bg-surface p-6">

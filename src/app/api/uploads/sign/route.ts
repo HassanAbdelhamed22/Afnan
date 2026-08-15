@@ -9,6 +9,6 @@ export const POST = withApiHandler(async (request) => {
   const session = await requireUser();
   const parsed = createUploadIntentSchema.safeParse(await request.json());
   if (!parsed.success) throw new AppError({ code: "VALIDATION_ERROR", message: "Select a JPEG, PNG, or WebP image up to 5 MB", statusCode: 400 });
-  if (parsed.data.purpose === "PRODUCT_IMAGE") await requireAdmin();
+  if (parsed.data.purpose !== "CUSTOM_REQUEST_REFERENCE") await requireAdmin();
   return apiSuccess(await createUploadIntent(session.user.id, parsed.data));
 });

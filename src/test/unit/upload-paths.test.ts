@@ -5,6 +5,7 @@ import { buildUploadFolder, isOwnedUploadPublicId, isProductImagePublicId } from
 describe("upload paths", () => {
   it("builds environment- and owner-scoped folders", () => {
     expect(buildUploadFolder("production", "PRODUCT_IMAGE", "admin-1")).toBe("afnan/production/products/admin-1");
+    expect(buildUploadFolder("production", "CATEGORY_IMAGE", "admin-1")).toBe("afnan/production/categories/admin-1");
     expect(buildUploadFolder("test", "CUSTOM_REQUEST_REFERENCE", "customer-1")).toBe("afnan/test/custom-requests/customer-1");
   });
 
