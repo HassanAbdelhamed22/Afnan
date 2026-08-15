@@ -19,16 +19,17 @@ function sign(parameters: Record<string, string | number>, secret: string) {
   return createHash("sha1").update(canonical + secret).digest("hex");
 }
 
-export async function createUploadIntent(userId: string, input: z.infer<typeof createUploadIntentSchema>) {
+export async function createUploadIntent(userId: string, input: Omit<z.infer<typeof createUploadIntentSchema>, "purpose"> & { purpose?: "CUSTOM_REQUEST_REFERENCE" | "PRODUCT_IMAGE" }) {
   const config = configuration();
+  const purpose = input.purpose ?? "CUSTOM_REQUEST_REFERENCE";
   await connectMongoose();
   const recentIntentCount = await UploadIntentModel.countDocuments({ userId, createdAt: { $gte: new Date(Date.now() - 60 * 60 * 1000) } });
   if (recentIntentCount >= 20) throw new AppError({ code: "RATE_LIMITED", message: "Too many image uploads. Try again later", statusCode: 429 });
   const timestamp = Math.floor(Date.now() / 1000);
-  const folder = `afnan/custom-requests/${userId}`;
+  const folder = purpose === "PRODUCT_IMAGE" ? `afnan/products/${userId}` : `afnan/custom-requests/${userId}`;
   const uploadPublicId = randomUUID();
   const expectedPublicId = `${folder}/${uploadPublicId}`;
-  const intent = await UploadIntentModel.create({ userId, purpose: "CUSTOM_REQUEST_REFERENCE", publicId: expectedPublicId, originalFilename: input.filename, mimeType: input.mimeType, sizeBytes: input.sizeBytes, status: "PENDING", expiresAt: new Date(Date.now() + 30 * 60 * 1000) });
+  const intent = await UploadIntentModel.create({ userId, purpose, publicId: expectedPublicId, originalFilename: input.filename, mimeType: input.mimeType, sizeBytes: input.sizeBytes, status: "PENDING", expiresAt: new Date(Date.now() + 30 * 60 * 1000) });
   return { intentId: intent._id.toString(), cloudName: config.cloudName, apiKey: config.apiKey, timestamp, folder, publicId: uploadPublicId, signature: sign({ folder, public_id: uploadPublicId, timestamp }, config.apiSecret) };
 }
 
@@ -47,7 +48,14 @@ export async function completeUploadIntent(userId: string, input: z.infer<typeof
   const resource = await resourceResponse.json() as { public_id?: string; secure_url?: string; width?: number; height?: number; bytes?: number; format?: string; resource_type?: string };
   if (resource.public_id !== input.publicId || resource.resource_type !== "image" || !resource.secure_url || !resource.width || !resource.height || !resource.bytes || !resource.format || !["jpg", "jpeg", "png", "webp"].includes(resource.format) || resource.bytes > intent.sizeBytes) throw new InvalidStateError("Uploaded image failed verification");
   intent.status = "COMPLETED";
-  intent.asset = { url: resource.secure_url, publicId: input.publicId, width: resource.width, height: resource.height };
+  intent.asset = { url: resource.secure_url, publicId: input.publicId, width: resource.width, height: resource.height, bytes: resource.bytes, format: resource.format as "jpg" | "jpeg" | "png" | "webp" };
   await intent.save();
   return { intentId: intent._id.toString(), asset: intent.asset };
+}
+
+export async function getUploadIntentPurpose(userId: string, intentId: string) {
+  await connectMongoose();
+  const intent = await UploadIntentModel.findOne({ _id: new Types.ObjectId(intentId), userId }).select("purpose").lean<{ purpose: "CUSTOM_REQUEST_REFERENCE" | "PRODUCT_IMAGE" }>();
+  if (!intent) throw new NotFoundError("Upload intent not found");
+  return intent.purpose;
 }
