@@ -14,6 +14,7 @@ import { ShippingRateModel } from "@/modules/shipping/model";
 import { OrderModel } from "@/modules/orders/model";
 import { sendNewOrderAdminEmail } from "@/modules/email";
 import { resolveMediaUrl } from "@/modules/uploads/types";
+import { logger } from "@/lib/logger";
 import { invalidatePurchasedProductCaches, type PurchasedProductCacheTarget } from "./cache";
 import type { PlaceOrderInput } from "./schemas";
 
@@ -39,7 +40,7 @@ export async function createOrderFromCart(customer: CheckoutCustomer, input: Pla
 
   const dbSession = await mongoose.startSession();
   let createdOrderNumber = "";
-  let emailDetails: { customerName: string; governorateName: string; totalAmount: number } | undefined;
+  let emailDetails: { customerName: string; customerPhone: string; governorateName: string; totalAmount: number } | undefined;
   const purchasedProducts = new Map<string, PurchasedProductCacheTarget>();
   try {
     await dbSession.withTransaction(async () => {
@@ -115,7 +116,7 @@ export async function createOrderFromCart(customer: CheckoutCustomer, input: Pla
       });
       await order.save({ session: dbSession });
       await CartModel.updateOne({ userId: customer.id }, { $set: { items: [] } }, { session: dbSession });
-      emailDetails = { customerName: customer.name, governorateName: rate.governorateName, totalAmount: subtotalAmount + rate.feeAmount };
+      emailDetails = { customerName: customer.name, customerPhone, governorateName: rate.governorateName, totalAmount: subtotalAmount + rate.feeAmount };
     });
   } catch (error) {
     if (isDuplicateKeyError(error)) {
@@ -134,7 +135,7 @@ export async function createOrderFromCart(customer: CheckoutCustomer, input: Pla
     // The order is already committed; cache failure must not report checkout failure.
   }
   if (emailDetails) {
-    await sendNewOrderAdminEmail({ orderNumber: createdOrderNumber, ...emailDetails }).catch(() => undefined);
+    await sendNewOrderAdminEmail({ orderNumber: createdOrderNumber, ...emailDetails }).catch(() => logger.error("New order admin email failed", { orderNumber: createdOrderNumber }));
   }
   return createdOrderNumber;
 }

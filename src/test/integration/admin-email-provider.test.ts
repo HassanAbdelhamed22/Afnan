@@ -1,0 +1,7 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+const mocks = vi.hoisted(() => ({ send: vi.fn(), settings: vi.fn() }));
+vi.mock("resend", () => ({ Resend: vi.fn(function ResendMock() { return { emails: { send: mocks.send } }; }) }));
+vi.mock("@/lib/env", () => ({ env: { RESEND_API_KEY: "test-key", AUTH_EMAIL_FROM: "Afnan <noreply@afnan.eg>", NEXT_PUBLIC_APP_URL: "https://afnan.eg" } }));
+vi.mock("@/modules/settings", () => ({ getStoreSettings: mocks.settings }));
+import { sendNewCustomRequestAdminEmail } from "@/modules/email/custom-requests"; import { sendNewOrderAdminEmail } from "@/modules/email/orders";
+describe("admin email provider adapter", () => { beforeEach(() => { vi.clearAllMocks(); mocks.settings.mockResolvedValue({ adminEmail: "operations@afnan.eg" }); mocks.send.mockResolvedValue({ error: null }); }); it("uses the configured operational inbox", async () => { await sendNewOrderAdminEmail({ orderNumber: "AFN-1", customerName: "Customer", customerPhone: "+201012345678", governorateName: "Cairo", totalAmount: 10000 }); expect(mocks.send).toHaveBeenCalledWith(expect.objectContaining({ to: "operations@afnan.eg", subject: expect.stringContaining("AFN-1") })); }); it("returns only a generic provider error", async () => { mocks.send.mockResolvedValue({ error: { message: "secret provider detail" } }); await expect(sendNewCustomRequestAdminEmail({ requestNumber: "CR-1", customerName: "Customer", customerPhone: "+201012345678", summary: "Runner" })).rejects.toThrow("Custom request email failed"); }); });
