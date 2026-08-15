@@ -36,9 +36,22 @@ export interface IOrder extends Document {
   shippingFeeAmount: number;
   totalAmount: number;
   currency: "EGP";
+  customerNote?: string;
+  adminNote?: string;
+  whatsappContactedAt?: Date;
+  whatsappConfirmedAt?: Date;
+  whatsappNote?: string;
+  statusHistory: Array<{ status: OrderStatus; timestamp: Date; actorId: string; note?: string }>;
+  stockRestored: boolean;
+  stockRestoredAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
+
+const OrderStatusHistorySchema = new Schema({
+  status: { type: String, enum: ["PENDING_CONFIRMATION", "CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"], required: true },
+  timestamp: { type: Date, required: true }, actorId: { type: String, required: true }, note: { type: String, maxlength: 1000 },
+}, { _id: false });
 
 const OrderItemSchema = new Schema<IOrderItem>({
   productId: { type: Schema.Types.ObjectId, required: true }, variantId: { type: Schema.Types.ObjectId, required: true },
@@ -56,10 +69,15 @@ const OrderSchema = new Schema<IOrder>({
   customerSnapshot: { name: { type: String, required: true }, email: { type: String, required: true }, phoneE164: { type: String, required: true }, whatsappE164: { type: String, required: true } },
   addressSnapshot: { recipientName: { type: String, required: true }, phoneE164: { type: String, required: true }, governorateCode: { type: String, required: true }, governorateName: { type: String, required: true }, city: { type: String, required: true }, area: String, street: { type: String, required: true }, building: { type: String, required: true }, floor: { type: String, required: true }, apartment: { type: String, required: true }, landmark: String, notes: String },
   items: { type: [OrderItemSchema], required: true }, subtotalAmount: { type: Number, required: true, min: 0 }, shippingFeeAmount: { type: Number, required: true, min: 0 }, totalAmount: { type: Number, required: true, min: 0 }, currency: { type: String, enum: ["EGP"], default: "EGP", required: true },
+  customerNote: { type: String, maxlength: 500 }, adminNote: { type: String, maxlength: 1000 },
+  whatsappContactedAt: Date, whatsappConfirmedAt: Date, whatsappNote: { type: String, maxlength: 1000 },
+  statusHistory: { type: [OrderStatusHistorySchema], required: true, default: [] },
+  stockRestored: { type: Boolean, required: true, default: false }, stockRestoredAt: Date,
 }, { timestamps: true });
 
 OrderSchema.index({ orderNumber: 1 }, { unique: true });
 OrderSchema.index({ checkoutToken: 1 }, { unique: true });
 OrderSchema.index({ userId: 1, createdAt: -1 });
+OrderSchema.index({ status: 1, whatsappConfirmationStatus: 1, createdAt: -1 });
 
 export const OrderModel = (models.Order as Model<IOrder> | undefined) ?? model<IOrder>("Order", OrderSchema);
