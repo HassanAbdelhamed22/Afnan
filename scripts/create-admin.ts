@@ -1,9 +1,11 @@
 import { MongoClient } from "mongodb";
+import { assertProductionMaintenanceAllowed } from "./lib/production-guard";
 
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.MONGODB_DB_NAME;
 
 async function main() {
+  assertProductionMaintenanceAllowed("create-admin");
   if (!uri || !dbName) {
     console.error("Missing MONGODB_URI or MONGODB_DB_NAME in environment settings.");
     console.log("Please run this script passing the variables or using node --env-file=.env.local");

@@ -8,7 +8,7 @@ import { getZodFieldErrors } from "@/lib/utils";
 import fs from "fs";
 import path from "path";
 
-if (process.env.NODE_ENV === "test" || !process.env.MONGODB_URI) {
+if (process.env.NODE_ENV !== "test" && !process.env.MONGODB_URI) {
   try {
     const envPath = path.resolve(process.cwd(), ".env.local");
     if (fs.existsSync(envPath)) {
@@ -20,7 +20,7 @@ if (process.env.NODE_ENV === "test" || !process.env.MONGODB_URI) {
           if (firstEqual !== -1) {
             const key = trimmed.slice(0, firstEqual).trim();
             const val = trimmed.slice(firstEqual + 1).trim();
-            process.env[key] = val;
+            process.env[key] ??= val;
           }
         }
       });

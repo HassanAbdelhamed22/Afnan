@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import mongoose from "mongoose";
 import { egyptGovernorates } from "../src/config/egypt-governorates";
+import { assertProductionMaintenanceAllowed } from "./lib/production-guard";
 
 function loadLocalEnvironment() {
   for (const filename of [".env.local", ".env"]) {
@@ -21,6 +22,7 @@ function loadLocalEnvironment() {
 
 async function main() {
   loadLocalEnvironment();
+  assertProductionMaintenanceAllowed("seed-shipping");
   if (!process.env.MONGODB_URI) throw new Error("MONGODB_URI is required");
   await mongoose.connect(process.env.MONGODB_URI, {
     dbName: process.env.MONGODB_DB_NAME || "afnan",

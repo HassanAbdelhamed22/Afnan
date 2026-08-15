@@ -1,4 +1,5 @@
 import { connectMongoose } from "../src/lib/mongoose";
+import mongoose from "mongoose";
 import { CategoryModel } from "../src/modules/categories/model";
 import { ProductModel } from "../src/modules/products/model";
 import { AddressModel } from "../src/modules/users/model";
@@ -9,8 +10,12 @@ import { ShippingRateModel } from "../src/modules/shipping/model";
 import { CustomRequestModel } from "../src/modules/custom-requests/model";
 import { UploadIntentModel } from "../src/modules/uploads/model";
 import { StoreSettingsModel } from "../src/modules/settings/model";
+import { assertProductionMaintenanceAllowed } from "./lib/production-guard";
+
+const INDEX_SCHEMA_VERSION = "2026-08-member-3-v1";
 
 async function main() {
+  assertProductionMaintenanceAllowed("create-indexes");
   console.log("Connecting to database...");
   await connectMongoose();
   console.log("Creating database indexes...");
@@ -39,7 +44,18 @@ async function main() {
   await StoreSettingsModel.ensureIndexes();
   console.log("Custom request, upload, and store settings indexes created.");
 
-  console.log("All indexes successfully synchronized.");
+  await mongoose.connection.collection("_maintenance").updateOne(
+    { key: "index-schema" },
+    {
+      $set: {
+        version: INDEX_SCHEMA_VERSION,
+        appliedAt: new Date(),
+      },
+    },
+    { upsert: true },
+  );
+
+  console.log(`All indexes synchronized at ${INDEX_SCHEMA_VERSION}.`);
   process.exit(0);
 }
 
