@@ -28,5 +28,6 @@ const CustomRequestSchema = new Schema<ICustomRequest>({
 
 CustomRequestSchema.index({ requestNumber: 1 }, { unique: true });
 CustomRequestSchema.index({ userId: 1, createdAt: -1 });
+CustomRequestSchema.index({ status: 1, desiredDate: 1, createdAt: -1 });
 
 export const CustomRequestModel = (models.CustomRequest as Model<ICustomRequest> | undefined) ?? model<ICustomRequest>("CustomRequest", CustomRequestSchema);

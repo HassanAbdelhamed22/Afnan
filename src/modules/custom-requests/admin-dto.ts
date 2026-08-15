@@ -1,0 +1,4 @@
+import type { MediaAsset } from "@/modules/uploads/types"; import type { CustomRequestStatus } from "./dto";
+export interface AdminCustomRequestListItemDTO { requestNumber: string; title: string; status: CustomRequestStatus; customerName: string; phoneE164: string; desiredDate?: string; createdAt: string; }
+export interface AdminCustomRequestDetailDTO extends AdminCustomRequestListItemDTO { id: string; description: string; material?: string; colors: string[]; dimensions?: string; quantity: number; budgetMinAmount?: number; budgetMaxAmount?: number; currency: "EGP"; referenceImages: MediaAsset[]; customerSnapshot: { name: string; email: string; phoneE164: string; whatsappE164: string }; internalNotes?: string; }
+export interface PaginatedAdminCustomRequestsDTO { requests: AdminCustomRequestListItemDTO[]; total: number; page: number; totalPages: number; }
