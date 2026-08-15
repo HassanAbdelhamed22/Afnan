@@ -1,10 +1,11 @@
 import React from "react";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { StoreSettingsForm } from "@/components/admin/store-settings-form";
+import { getAdminStoreSettings } from "@/modules/settings/repository";
 
-export default function AdminSettingsPage() {
+export default async function AdminSettingsPage() {
+  const settings = await getAdminStoreSettings();
   return (
-    <div className="container mx-auto py-12 px-4">
-      <h1 className="text-3xl font-bold mb-6">Store Settings</h1>
-      <p className="text-neutral-600">Configure global metadata, contacts, WhatsApp messages, and application parameters.</p>
-    </div>
+    <><AdminPageHeader title="Store settings" description="Manage public contact details, operational prefixes, and the WhatsApp confirmation template. Provider secrets remain in environment variables." /><StoreSettingsForm settings={settings} /></>
   );
 }
