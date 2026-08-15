@@ -8,6 +8,7 @@ import { sendNewCustomRequestAdminEmail } from "@/modules/email";
 import { UploadIntentModel } from "@/modules/uploads/model";
 import { CustomRequestModel } from "./model";
 import type { CustomRequestInput } from "./schemas";
+import { logger } from "@/lib/logger";
 
 interface RequestCustomer { id: string; name: string; email: string; phoneE164?: string | null; whatsappE164?: string | null }
 function requestNumber() { return `CR-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${randomBytes(3).toString("hex").toUpperCase()}`; }
@@ -40,6 +41,6 @@ export async function createCustomRequest(customer: RequestCustomer, input: Cust
   } finally {
     await session.endSession();
   }
-  await sendNewCustomRequestAdminEmail({ requestNumber: number, customerName: customer.name, title: input.title }).catch(() => undefined);
+  await sendNewCustomRequestAdminEmail({ requestNumber: number, customerName: customer.name, customerPhone: customer.phoneE164, summary: input.title }).catch(() => logger.error("New custom request admin email failed", { requestNumber: number }));
   return number;
 }

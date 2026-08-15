@@ -53,4 +53,10 @@ describe("custom request creation", () => {
     await expect(createCustomRequest({ ...customer, phoneE164: undefined }, input)).rejects.toThrow("Add a phone number");
     expect(mocks.connectMongoose).not.toHaveBeenCalled();
   });
+
+  it("keeps the persisted request when the best-effort email fails", async () => {
+    mocks.sendEmail.mockRejectedValue(new Error("provider unavailable"));
+    await expect(createCustomRequest(customer, input)).resolves.toMatch(/^CR-/);
+    expect(mocks.requestSave).toHaveBeenCalledOnce();
+  });
 });
