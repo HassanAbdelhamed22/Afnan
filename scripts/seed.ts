@@ -3,8 +3,10 @@ import { CategoryModel } from "../src/modules/categories/model";
 import { ProductModel } from "../src/modules/products/model";
 import { ShippingRateModel } from "../src/modules/shipping/model";
 import { egyptGovernorates } from "../src/config/egypt-governorates";
+import { assertDestructiveSeedAllowed } from "./lib/production-guard";
 
 async function main() {
+  assertDestructiveSeedAllowed(process.env.MONGODB_DB_NAME || "afnan");
   console.log("Connecting to database...");
   await connectMongoose();
 
