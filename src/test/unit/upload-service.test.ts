@@ -13,7 +13,7 @@ describe("secure upload intents", () => {
     vi.clearAllMocks();
     mocks.countDocuments.mockResolvedValue(0);
     mocks.create.mockResolvedValue({ _id: { toString: () => "507f1f77bcf86cd799439011" } });
-    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ public_id: "afnan/custom-requests/customer-1/asset", secure_url: "https://res.cloudinary.com/afnan-cloud/image/upload/v123/asset.png", width: 800, height: 1000, bytes: 1500, format: "png", resource_type: "image" }), { status: 200 })));
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ public_id: "afnan/test/custom-requests/customer-1/asset", secure_url: "https://res.cloudinary.com/afnan-cloud/image/upload/v123/asset.png", width: 800, height: 1000, bytes: 1500, format: "png", resource_type: "image" }), { status: 200 })));
   });
 
   it("creates a short-lived owner-scoped signed upload", async () => {
@@ -24,7 +24,7 @@ describe("secure upload intents", () => {
   });
 
   it("verifies Cloudinary completion under the authenticated owner", async () => {
-    const publicId = "afnan/custom-requests/customer-1/asset";
+    const publicId = "afnan/test/custom-requests/customer-1/asset";
     const signature = createHash("sha1").update(`public_id=${publicId}&version=123secret`).digest("hex");
     const intent = { publicId, sizeBytes: 2000, status: "PENDING", asset: undefined, _id: { toString: () => "507f1f77bcf86cd799439011" }, save: vi.fn() };
     mocks.findOne.mockResolvedValue(intent);

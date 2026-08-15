@@ -46,12 +46,27 @@ const envSchema = z.object({
   AUTH_EMAIL_FROM: z.string().min(1),
   ADMIN_EMAIL: z.string().email(),
 
+  APP_ENV: z.enum(["development", "preview", "production", "test"]),
+
   CLOUDINARY_CLOUD_NAME: z.string().min(1).optional(),
   CLOUDINARY_API_KEY: z.string().min(1).optional(),
   CLOUDINARY_API_SECRET: z.string().min(1).optional(),
 });
 
-const parsed = envSchema.safeParse(process.env);
+const inferredAppEnvironment =
+  process.env.APP_ENV ??
+  (process.env.VERCEL_ENV === "preview"
+    ? "preview"
+    : process.env.VERCEL_ENV === "production" || process.env.NODE_ENV === "production"
+      ? "production"
+      : process.env.NODE_ENV === "test"
+        ? "test"
+        : "development");
+
+const parsed = envSchema.safeParse({
+  ...process.env,
+  APP_ENV: inferredAppEnvironment,
+});
 
 if (!parsed.success) {
   console.error(
