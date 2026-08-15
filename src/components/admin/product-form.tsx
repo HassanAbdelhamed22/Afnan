@@ -126,11 +126,6 @@ export function ProductForm({ product, categories }: { product?: AdminProductDTO
         </div>
       </section>
 
-      <section className="border border-outline-variant bg-surface-container-low p-6">
-        <p className="label-caps">Product images</p>
-        <p className="body-sm mt-2 text-on-surface-variant">{product?.imageCount ? `${product.imageCount} secure image asset(s) are preserved.` : "Secure image upload and approval are completed in the product-image enhancement workflow."}</p>
-      </section>
-
       {!state.ok ? <p role="alert" className="border-l-2 border-error bg-error-container/30 px-4 py-3 body-sm text-error">{state.error.message}</p> : state.message ? <p role="status" className="border-l-2 border-primary bg-surface px-4 py-3 body-sm">{state.message}</p> : null}
       <div className="flex justify-end border-t border-outline-variant pt-6"><Button type="submit" disabled={pending}>{pending ? "Saving…" : product ? "Save product" : "Create product"}</Button></div>
     </form>

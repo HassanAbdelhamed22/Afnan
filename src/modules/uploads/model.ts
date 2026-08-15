@@ -6,7 +6,7 @@ import type { MediaAsset } from "./types";
 
 export interface IUploadIntent extends Document {
   userId: string;
-  purpose: "CUSTOM_REQUEST_REFERENCE";
+  purpose: "CUSTOM_REQUEST_REFERENCE" | "PRODUCT_IMAGE";
   publicId: string;
   originalFilename: string;
   mimeType: string;
@@ -20,7 +20,7 @@ export interface IUploadIntent extends Document {
 
 const UploadIntentSchema = new Schema<IUploadIntent>({
   userId: { type: String, required: true },
-  purpose: { type: String, enum: ["CUSTOM_REQUEST_REFERENCE"], required: true },
+  purpose: { type: String, enum: ["CUSTOM_REQUEST_REFERENCE", "PRODUCT_IMAGE"], required: true },
   publicId: { type: String, required: true }, originalFilename: { type: String, required: true },
   mimeType: { type: String, required: true }, sizeBytes: { type: Number, required: true },
   status: { type: String, enum: ["PENDING", "COMPLETED", "CLAIMED"], required: true, default: "PENDING" },

@@ -13,6 +13,7 @@ import { CategoryModel } from "@/modules/categories/model";
 import { ShippingRateModel } from "@/modules/shipping/model";
 import { OrderModel } from "@/modules/orders/model";
 import { sendNewOrderAdminEmail } from "@/modules/email";
+import { resolveMediaUrl } from "@/modules/uploads/types";
 import { invalidatePurchasedProductCaches, type PurchasedProductCacheTarget } from "./cache";
 import type { PlaceOrderInput } from "./schemas";
 
@@ -85,7 +86,7 @@ export async function createOrderFromCart(customer: CheckoutCustomer, input: Pla
         }
         return {
           productId: product._id, variantId: variant._id, productName: product.name, productSlug: product.slug,
-          image: product.images[0], sku: variant.sku, variantLabel: variant.label,
+          image: product.images[0] ? { ...product.images[0], url: resolveMediaUrl(product.images[0]) } : undefined, sku: variant.sku, variantLabel: variant.label,
           unitPriceAmount, quantity: cartItem.quantity, lineTotalAmount,
           personalization: cartItem.personalization || undefined, fulfillmentType: product.fulfillmentType,
           preparationDaysMin: product.preparationDaysMin, preparationDaysMax: product.preparationDaysMax,

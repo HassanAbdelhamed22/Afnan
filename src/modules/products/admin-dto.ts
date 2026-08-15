@@ -1,3 +1,5 @@
+import type { MediaAsset } from "@/modules/uploads/types";
+
 export interface AdminVariantDTO {
   id: string;
   sku: string;
@@ -36,6 +38,7 @@ export interface AdminProductDTO extends AdminProductListItemDTO {
   variants: AdminVariantDTO[];
   isFeatured: boolean;
   imageCount: number;
+  images: MediaAsset[];
 }
 
 export interface PaginatedAdminProductsDTO {

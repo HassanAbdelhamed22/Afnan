@@ -5,6 +5,7 @@ import { connectMongoose } from "@/lib/mongoose";
 import { NotFoundError } from "@/lib/errors/app-error";
 import { CategoryModel } from "../categories/model";
 import { ProductModel } from "../products/model";
+import { resolveMediaUrl, type MediaAsset } from "@/modules/uploads/types";
 import { CACHE_TAGS } from "./cache";
 import { catalogFiltersSchema } from "./schemas";
 import {
@@ -21,6 +22,13 @@ export interface DatabaseMediaAsset {
   publicId: string;
   width?: number;
   height?: number;
+  bytes?: number;
+  format?: "jpg" | "jpeg" | "png" | "webp";
+  alt?: string;
+  sortOrder?: number;
+  isPrimary?: boolean;
+  enhancedUrl?: string;
+  presentation?: MediaAsset["presentation"];
 }
 
 export interface DatabaseCategory {
@@ -116,7 +124,8 @@ export function mapProductToCardDTO(doc: DatabaseProduct): ProductCardDTO {
     basePriceAmount: doc.basePriceAmount,
     currency: (doc.currency as "EGP") || "EGP",
     images: (doc.images || []).map((img: DatabaseMediaAsset) => ({
-      url: img.url,
+      ...img,
+      url: resolveMediaUrl(img),
       publicId: img.publicId,
       width: img.width,
       height: img.height,
@@ -188,7 +197,8 @@ export function mapProductToDetailDTO(doc: DatabaseProduct): ProductDetailDTO {
     preparationDaysMax: doc.preparationDaysMax ?? undefined,
     careInstructions: doc.careInstructions ?? undefined,
     images: (doc.images || []).map((img: DatabaseMediaAsset) => ({
-      url: img.url,
+      ...img,
+      url: resolveMediaUrl(img),
       publicId: img.publicId,
       width: img.width,
       height: img.height,

@@ -101,12 +101,13 @@ export async function getAdminProduct(productId: string): Promise<AdminProductDT
     })),
     isFeatured: product.isFeatured,
     imageCount: product.images.length,
+    images: [...product.images].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)).map((image) => ({ ...image })),
   };
 }
 
 function assertPublishable(product: Pick<IProduct, "name" | "description" | "categoryId" | "basePriceAmount" | "images" | "variants" | "fulfillmentType" | "preparationDaysMin" | "preparationDaysMax">) {
   if (!product.name || !product.description || !product.categoryId || !Number.isSafeInteger(product.basePriceAmount) || product.basePriceAmount < 0) throw new InvalidStateError("Product details are incomplete");
-  if (!product.images.length) throw new InvalidStateError("Add a primary product image before publishing");
+  if (!product.images.length || !product.images.some((image) => image.isPrimary && image.alt)) throw new InvalidStateError("Add a primary product image with alt text before publishing");
   if (!product.variants.some((variant) => variant.isActive)) throw new InvalidStateError("Add an active variant before publishing");
   if (product.fulfillmentType === "READY_MADE" && product.variants.some((variant) => variant.stockQuantity === undefined)) throw new InvalidStateError("Ready-made variants require stock quantities");
   if (product.fulfillmentType === "MADE_TO_ORDER" && (!product.preparationDaysMin || !product.preparationDaysMax || product.preparationDaysMin > product.preparationDaysMax)) throw new InvalidStateError("Made-to-order preparation time is invalid");
