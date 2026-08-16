@@ -1,9 +1,13 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { type Metadata } from "next";
-import { getProductBySlug, getRelatedProducts, getCategoryNavigation } from "@/modules/catalog/queries";
+import { getProductBySlug, getCategoryNavigation, getPublicProductSlugs } from "@/modules/catalog/queries";
 import { ProductDetails } from "@/components/catalog/product-details";
+import { RelatedProducts } from "@/components/catalog/related-products";
+import { RelatedProductsSkeleton } from "@/components/catalog/catalog-loading";
 import { ProductStructuredData } from "@/components/catalog/product-structured-data";
 import { env } from "@/lib/env";
+import { NotFoundError } from "@/lib/errors/app-error";
 
 interface ProductPageProps {
   params: Promise<{
@@ -43,21 +47,28 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   }
 }
 
+export async function generateStaticParams() {
+  try {
+    const slugs = await getPublicProductSlugs();
+    return slugs.map((slug) => ({ slug }));
+  } catch {
+    // Preserve on-demand rendering when MongoDB is unavailable during a build.
+    return [];
+  }
+}
+
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
 
   let product;
   try {
     product = await getProductBySlug(slug);
-  } catch {
-    notFound();
+  } catch (error) {
+    if (error instanceof NotFoundError) notFound();
+    throw error;
   }
 
-  // Fetch related products and category name in parallel
-  const [relatedProducts, categories] = await Promise.all([
-    getRelatedProducts(product.id, 4),
-    getCategoryNavigation(),
-  ]);
+  const categories = await getCategoryNavigation();
 
   const category = categories.find((cat) => cat.id === product.categoryId);
 
@@ -70,10 +81,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
       />
       <ProductDetails
         product={product}
-        relatedProducts={relatedProducts}
         categoryName={category?.name}
         categorySlug={category?.slug}
       />
+      <Suspense fallback={<RelatedProductsSkeleton />}>
+        <RelatedProducts productId={product.id} categoryId={product.categoryId} />
+      </Suspense>
     </>
   );
 }

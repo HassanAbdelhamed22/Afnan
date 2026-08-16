@@ -43,6 +43,7 @@ export function LoginForm({
   );
 
   const [showPassword, setShowPassword] = useState(false);
+  const redirecting = state.ok && Boolean(state.message);
 
   const [values, setValues] = useState({
     email: "",
@@ -80,16 +81,13 @@ export function LoginForm({
       toast.show(state.message, "success");
       const redirectUrl = state.data.redirectTo;
       let cancelled = false;
-      const timeoutId = window.setTimeout(() => {
-        void refetchSession({ query: { disableCookieCache: true } }).then(() => {
-          if (cancelled) return;
-          router.push(redirectUrl);
-          router.refresh();
-        });
-      }, 800);
+      void refetchSession({ query: { disableCookieCache: true } }).finally(() => {
+        if (cancelled) return;
+        router.replace(redirectUrl);
+        router.refresh();
+      });
       return () => {
         cancelled = true;
-        window.clearTimeout(timeoutId);
       };
     }
   }, [state, setServerErrors, refetchSession, router]);
@@ -253,12 +251,18 @@ export function LoginForm({
 
       <Button
         type="submit"
-        disabled={pending}
-        aria-busy={pending}
+        disabled={pending || redirecting}
+        aria-busy={pending || redirecting}
         className="mt-2 min-h-12 w-full py-3 font-sans text-xs font-semibold tracking-[0.12em] hover:-translate-y-px"
       >
-        {pending ? "Signing in…" : "Sign in"}
+        {redirecting ? "Loading your account…" : pending ? "Signing in…" : "Sign in"}
       </Button>
+
+      {redirecting ? (
+        <p role="status" className="text-center font-sans text-xs text-on-surface-variant">
+          Sign-in complete. Preparing your account…
+        </p>
+      ) : null}
 
       <p className="text-center font-sans text-xs leading-6 text-on-surface-variant sm:text-sm">
         Don&apos;t have an account?{" "}

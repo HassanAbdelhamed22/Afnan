@@ -1,8 +1,8 @@
-import { act, render } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  push: vi.fn(),
+  replace: vi.fn(),
   refresh: vi.fn(),
   refetchSession: vi.fn(),
   toast: vi.fn(),
@@ -21,7 +21,7 @@ vi.mock("react", async (importOriginal) => {
   };
 });
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: mocks.push, refresh: mocks.refresh }),
+  useRouter: () => ({ replace: mocks.replace, refresh: mocks.refresh }),
 }));
 vi.mock("@/lib/auth/auth-client", () => ({
   useSession: () => ({ refetch: mocks.refetchSession }),
@@ -43,25 +43,24 @@ import { LoginForm } from "@/components/auth/login-form";
 
 describe("LoginForm session synchronization", () => {
   beforeEach(() => {
-    vi.useFakeTimers();
     vi.clearAllMocks();
     mocks.refetchSession.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
-    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   it("refreshes the Better Auth client session before navigating", async () => {
     render(<LoginForm />);
 
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(800);
-    });
+    expect(screen.getByRole("button", { name: "Loading your account…" })).toBeDisabled();
 
-    expect(mocks.refetchSession).toHaveBeenCalledWith({ query: { disableCookieCache: true } });
-    expect(mocks.push).toHaveBeenCalledWith("/account/profile");
-    expect(mocks.refresh).toHaveBeenCalledOnce();
-    expect(mocks.refetchSession.mock.invocationCallOrder[0]).toBeLessThan(mocks.push.mock.invocationCallOrder[0]);
+    await waitFor(() => {
+      expect(mocks.refetchSession).toHaveBeenCalledWith({ query: { disableCookieCache: true } });
+      expect(mocks.replace).toHaveBeenCalledWith("/account/profile");
+      expect(mocks.refresh).toHaveBeenCalledOnce();
+    });
+    expect(mocks.refetchSession.mock.invocationCallOrder[0]).toBeLessThan(mocks.replace.mock.invocationCallOrder[0]);
   });
 });

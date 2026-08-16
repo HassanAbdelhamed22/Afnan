@@ -2,6 +2,7 @@ import React from "react";
 import { notFound } from "next/navigation";
 import { type Metadata } from "next";
 import { env } from "@/lib/env";
+import { NotFoundError } from "@/lib/errors/app-error";
 import {
   listCatalogProducts,
   getCategoryBySlug,
@@ -29,8 +30,7 @@ interface CategoryPageProps {
 }
 
 export async function generateMetadata({ params, searchParams }: CategoryPageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const pParams = await searchParams;
+  const [{ slug }, pParams] = await Promise.all([params, searchParams]);
   const appUrl = env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   try {
@@ -68,16 +68,7 @@ export async function generateMetadata({ params, searchParams }: CategoryPagePro
 }
 
 export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
-  const { slug } = await params;
-  const pParams = await searchParams;
-
-  // Verify category exists and is active
-  let category;
-  try {
-    category = await getCategoryBySlug(slug);
-  } catch {
-    notFound();
-  }
+  const [{ slug }, pParams] = await Promise.all([params, searchParams]);
 
   // Map and parse URL parameters
   const page = pParams.page ? Math.max(1, parseInt(pParams.page, 10)) : 1;
@@ -102,12 +93,21 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
     limit: 12,
   };
 
-  // Fetch data in parallel
-  const [catalogData, categories, filterMetadata] = await Promise.all([
-    listCatalogProducts(filters),
-    getCategoryNavigation(),
-    getAvailableFilterMetadata(),
-  ]);
+  let category;
+  let catalogData;
+  let categories;
+  let filterMetadata;
+  try {
+    [category, catalogData, categories, filterMetadata] = await Promise.all([
+      getCategoryBySlug(slug),
+      listCatalogProducts(filters),
+      getCategoryNavigation(),
+      getAvailableFilterMetadata(),
+    ]);
+  } catch (error) {
+    if (error instanceof NotFoundError) notFound();
+    throw error;
+  }
 
   return (
     <ShopCatalog

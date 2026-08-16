@@ -75,7 +75,7 @@ export interface CatalogFilters {
   availability?: "IN_STOCK" | "ALL";
   fulfillmentType?: "READY_MADE" | "MADE_TO_ORDER";
   search?: string;
-  sort?: "newest" | "price_asc" | "price_desc";
+  sort?: "newest" | "price_asc" | "price_desc" | "relevance";
   page?: number;
   limit?: number;
 }
