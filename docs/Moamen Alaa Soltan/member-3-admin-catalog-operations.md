@@ -90,11 +90,17 @@ Store secrets only in `.env.local` for development and in the deployment provide
 | `CLOUDINARY_CLOUD_NAME` | Signed uploads/enhancement | Required for live uploads |
 | `CLOUDINARY_API_KEY` | Signed uploads/enhancement | Server environment only |
 | `CLOUDINARY_API_SECRET` | Upload/resource signatures | Server environment only; never expose to client |
-| `RESEND_API_KEY` | Transactional admin email | Restricted production sending key |
-| `AUTH_EMAIL_FROM` | Verified sender | Address on the verified sending domain |
+| `EMAIL_PROVIDER` | Selects the email adapter: `resend` or `smtp` | Set explicitly for each environment; defaults to `resend` |
+| `RESEND_API_KEY` | Resend transactional email | Required only when `EMAIL_PROVIDER=resend`; keep the draft configuration available during SMTP validation |
+| `SMTP_HOST` | SMTP server hostname | Required only when `EMAIL_PROVIDER=smtp` |
+| `SMTP_PORT` | SMTP submission port | Required for SMTP; normally `587` for STARTTLS or `465` for implicit TLS |
+| `SMTP_SECURE` | Enables implicit TLS | Use `true` with port `465`; normally `false` with port `587` |
+| `SMTP_USER` | SMTP account username | Server environment only |
+| `SMTP_PASSWORD` | SMTP account password or app password | Server environment only; never expose to client |
+| `AUTH_EMAIL_FROM` | Transactional sender name and address | Must be authorized by the selected provider |
 | `ADMIN_EMAIL` | Initial/fallback admin recipient | Monitored operational inbox |
 
-The three Cloudinary values are still required before a live end-to-end image-enhancement check. Add them directly to `.env.local` and Vercel; do not paste them into chat or Git. The Resend variables exist locally, but production still needs a verified domain and a deliberate live smoke email.
+The three Cloudinary values are still required before a live end-to-end image-enhancement check. Add them directly to `.env.local` and Vercel; do not paste them into chat or Git. Email delivery uses a provider-neutral application interface: Resend remains available, while SMTP can be selected without changing authentication, order, or custom-request code. Run a deliberate live smoke email with the selected production provider.
 
 After first admin access, configure `/admin/settings` with the operational recipient, WhatsApp number/template, order/request prefixes, and public social links.
 
@@ -104,7 +110,7 @@ After first admin access, configure `/admin/settings` with the operational recip
 2. Connect the Git repository to Vercel. Use preview deployments for feature branches and reserve `main` as the production branch. Vercel supports environment-specific variables and creates preview deployments for non-production branches ([Vercel environment variables](https://vercel.com/docs/environment-variables), [Vercel Git deployments](https://vercel.com/docs/git)).
 3. Use separate MongoDB databases and credentials for development, preview, and production. Grant the application only the database privileges it needs; MongoDB documents database-scoped built-in roles such as `readWrite` ([MongoDB built-in roles](https://www.mongodb.com/docs/manual/reference/built-in-roles/)). Enable Atlas backups and assign backup/restore permissions separately from application access ([Atlas user roles](https://www.mongodb.com/docs/atlas/reference/user-roles/)).
 4. Set `APP_ENV` per Vercel environment so uploads cannot share Cloudinary folders. Keep signed uploads, validate returned assets, and enable the managed background-removal capability on the chosen Cloudinary account. Cloudinary documents signed/direct upload behavior and upload restrictions in its [upload guide](https://cloudinary.com/documentation/upload_images).
-5. Verify a dedicated Resend subdomain, publish its SPF/DKIM records, and add DMARC when ready. Resend recommends a subdomain to isolate sender reputation ([Resend domain verification](https://resend.com/docs/dashboard/domains/introduction)).
+5. Select and verify the production email adapter. For SMTP, configure the provider's encrypted credentials and authorized sender in Vercel, then test both authentication and admin-alert delivery. Keep the Resend adapter configured as a fallback; if it is promoted later, verify a dedicated subdomain and publish its SPF/DKIM records before production use ([Resend domain verification](https://resend.com/docs/dashboard/domains/introduction)).
 6. Enable Vercel Authentication for preview deployments where plan support permits it, because previews can contain operational test data ([Vercel Deployment Protection](https://vercel.com/docs/deployment-protection)).
 7. Deploy preview first. Run Playwright against the preview with `PLAYWRIGHT_BASE_URL`, then manually verify admin catalog writes, signed upload, image approval, order transition/stock restoration, WhatsApp encoding, request notes, shipping quote, and a test admin email.
 8. Take/confirm a MongoDB backup. Run the versioned index script once against production, then seed missing shipping rows without overwriting configured rates:
@@ -140,7 +146,7 @@ After first admin access, configure `/admin/settings` with the operational recip
 ## Known external follow-ups
 
 - Supply the Cloudinary credentials and enabled background-removal capability for a live verification.
-- Verify the production Resend domain and perform one deliberate delivery test.
+- Validate the SMTP provider with one authentication email and one admin-alert email; retain the unselected Resend configuration until the SMTP path is accepted.
 - Provision separate preview/production MongoDB credentials, backups, and network access rules.
 - Configure Vercel environment variables, branch protection, deployment protection, custom domain, and rollback ownership.
 - Decide the external alerting destination for structured production errors. No new monitoring vendor was added without approval.

@@ -30,28 +30,54 @@ if (process.env.NODE_ENV !== "test" && !process.env.MONGODB_URI) {
   }
 }
 
-const envSchema = z.object({
-  NODE_ENV: z
-    .enum(["development", "test", "production"])
-    .default("development"),
+const envSchema = z
+  .object({
+    NODE_ENV: z
+      .enum(["development", "test", "production"])
+      .default("development"),
 
-  MONGODB_URI: z.string().min(1),
-  MONGODB_DB_NAME: z.string().min(1).default("afnan"),
+    MONGODB_URI: z.string().min(1),
+    MONGODB_DB_NAME: z.string().min(1).default("afnan"),
 
-  BETTER_AUTH_SECRET: z.string().min(32),
-  BETTER_AUTH_URL: z.string().url(),
-  NEXT_PUBLIC_APP_URL: z.string().url(),
+    BETTER_AUTH_SECRET: z.string().min(32),
+    BETTER_AUTH_URL: z.string().url(),
+    NEXT_PUBLIC_APP_URL: z.string().url(),
 
-  RESEND_API_KEY: z.string().min(1),
-  AUTH_EMAIL_FROM: z.string().min(1),
-  ADMIN_EMAIL: z.string().email(),
+    EMAIL_PROVIDER: z.enum(["resend", "smtp"]).default("resend"),
+    RESEND_API_KEY: z.string().min(1).optional(),
+    SMTP_HOST: z.string().min(1).optional(),
+    SMTP_PORT: z.coerce.number().int().min(1).max(65_535).optional(),
+    SMTP_SECURE: z
+      .enum(["true", "false"])
+      .default("false")
+      .transform((value) => value === "true"),
+    SMTP_USER: z.string().min(1).optional(),
+    SMTP_PASSWORD: z.string().min(1).optional(),
+    AUTH_EMAIL_FROM: z.string().min(1),
+    ADMIN_EMAIL: z.string().email(),
 
-  APP_ENV: z.enum(["development", "preview", "production", "test"]),
+    APP_ENV: z.enum(["development", "preview", "production", "test"]),
 
-  CLOUDINARY_CLOUD_NAME: z.string().min(1).optional(),
-  CLOUDINARY_API_KEY: z.string().min(1).optional(),
-  CLOUDINARY_API_SECRET: z.string().min(1).optional(),
-});
+    CLOUDINARY_CLOUD_NAME: z.string().min(1).optional(),
+    CLOUDINARY_API_KEY: z.string().min(1).optional(),
+    CLOUDINARY_API_SECRET: z.string().min(1).optional(),
+  })
+  .superRefine((value, context) => {
+    const requiredProviderFields =
+      value.EMAIL_PROVIDER === "smtp"
+        ? (["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASSWORD"] as const)
+        : (["RESEND_API_KEY"] as const);
+
+    for (const field of requiredProviderFields) {
+      if (value[field] === undefined) {
+        context.addIssue({
+          code: "custom",
+          message: `${field} is required when EMAIL_PROVIDER=${value.EMAIL_PROVIDER}`,
+          path: [field],
+        });
+      }
+    }
+  });
 
 const inferredAppEnvironment =
   process.env.APP_ENV ??
