@@ -6,7 +6,7 @@ import {
   rawGetCategoryNavigation,
   rawGetProductBySlug,
   rawGetCategoryBySlug,
-  listCatalogProducts,
+  rawListCatalogProducts,
   rawGetAvailableFilterMetadata,
 } from "../../modules/catalog/queries";
 import mongoose from "mongoose";
@@ -171,19 +171,19 @@ describe("Catalog Queries Integration Tests", () => {
     ]);
 
     // Test filter by maxPrice
-    const p1 = await listCatalogProducts({ maxPrice: 40000 });
+    const p1 = await rawListCatalogProducts({ maxPrice: 40000 });
     expect(p1.products.length).toBe(2); // Blue (300) and Green (400)
 
     // Test filter by availability = IN_STOCK
-    const p2 = await listCatalogProducts({ availability: "IN_STOCK" });
+    const p2 = await rawListCatalogProducts({ availability: "IN_STOCK" });
     expect(p2.products.length).toBe(2); // Red (ready-made in stock) and Blue (made-to-order)
 
     // Test filter by material
-    const p3 = await listCatalogProducts({ material: "Leather" });
+    const p3 = await rawListCatalogProducts({ material: "Leather" });
     expect(p3.products.length).toBe(2); // Red and Green
 
     // Test search term
-    const p4 = await listCatalogProducts({ search: "Blue" });
+    const p4 = await rawListCatalogProducts({ search: "Blue" });
     // Text index search requires building the text index, but we can verify it doesn't crash
     expect(p4).toBeDefined();
   }, 15000);

@@ -8,6 +8,8 @@ import {
   getHomepageCatalog,
   getProductBySlug,
   getCategoryBySlug,
+  getRelatedProducts,
+  listCatalogProducts,
   revalidateProductCache,
   revalidateCategoryCache,
   revalidateCatalogCache,
@@ -190,10 +192,8 @@ describe("Storefront Caching & Freshness Integration Tests", () => {
       expect.arrayContaining(["product-by-slug", "clay-pot-101"]),
       expect.objectContaining({
         tags: [
-          `product:${prod._id.toString()}`,
           `product:clay-pot-101`,
-          "products",
-          `category:${cat._id.toString()}`,
+          "categories",
         ],
         revalidate: 3600,
       })
@@ -234,7 +234,6 @@ describe("Storefront Caching & Freshness Integration Tests", () => {
       expect.arrayContaining(["category-by-slug", "clay-pots"]),
       expect.objectContaining({
         tags: [
-          `category:${cat._id.toString()}`,
           `category:clay-pots`,
           "categories",
         ],
@@ -257,5 +256,89 @@ describe("Storefront Caching & Freshness Integration Tests", () => {
     // Next fetch should retrieve updated name
     const detail3 = await getCategoryBySlug("clay-pots");
     expect(detail3.name).toBe("Clay Pots Updated");
+  });
+
+  it("caches bounded catalog pages and invalidates them after product writes", async () => {
+    const cat = await CategoryModel.create({
+      name: "Textiles",
+      slug: "textiles",
+      sortOrder: 1,
+      isActive: true,
+    });
+    const product = await ProductModel.create({
+      name: "Woven Runner",
+      slug: "woven-runner",
+      description: "A handwoven table runner",
+      categoryId: cat._id,
+      status: "ACTIVE",
+      fulfillmentType: "MADE_TO_ORDER",
+      basePriceAmount: 24000,
+    });
+
+    const first = await listCatalogProducts({ limit: 12, sort: "newest" });
+    expect(first.products[0].name).toBe("Woven Runner");
+    expect(unstable_cache).toHaveBeenCalledWith(
+      expect.any(Function),
+      expect.arrayContaining(["catalog-products"]),
+      expect.objectContaining({
+        tags: ["products", "categories"],
+        revalidate: 900,
+      }),
+    );
+
+    await ProductModel.findByIdAndUpdate(product._id, { name: "Updated Runner" });
+    const cached = await listCatalogProducts({ limit: 12, sort: "newest" });
+    expect(cached.products[0].name).toBe("Woven Runner");
+
+    revalidateProductCache(product._id.toString(), product.slug);
+    const fresh = await listCatalogProducts({ limit: 12, sort: "newest" });
+    expect(fresh.products[0].name).toBe("Updated Runner");
+  });
+
+  it("caches related products with product and category tags", async () => {
+    const cat = await CategoryModel.create({
+      name: "Baskets",
+      slug: "baskets",
+      sortOrder: 1,
+      isActive: true,
+    });
+    const [source, related] = await ProductModel.create([
+      {
+        name: "Palm Basket",
+        slug: "palm-basket",
+        description: "A palm basket",
+        categoryId: cat._id,
+        status: "ACTIVE",
+        fulfillmentType: "MADE_TO_ORDER",
+        basePriceAmount: 12000,
+      },
+      {
+        name: "Reed Basket",
+        slug: "reed-basket",
+        description: "A reed basket",
+        categoryId: cat._id,
+        status: "ACTIVE",
+        fulfillmentType: "MADE_TO_ORDER",
+        basePriceAmount: 14000,
+      },
+    ]);
+
+    const products = await getRelatedProducts(source._id.toString(), cat._id.toString(), 4);
+    expect(products.map((item) => item.slug)).toEqual(["reed-basket"]);
+    expect(unstable_cache).toHaveBeenCalledWith(
+      expect.any(Function),
+      expect.arrayContaining(["related-products", source._id.toString(), cat._id.toString(), "4"]),
+      expect.objectContaining({
+        tags: [
+          "products",
+          `product:${source._id.toString()}`,
+          `category:${cat._id.toString()}`,
+        ],
+        revalidate: 3600,
+      }),
+    );
+
+    revalidateProductCache(related._id.toString(), related.slug);
+    expect(updateTag).toHaveBeenCalledWith("products");
   });
 });

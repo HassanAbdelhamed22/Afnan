@@ -214,6 +214,7 @@ export function mapProductToDetailDTO(doc: DatabaseProduct): ProductDetailDTO {
 export async function rawGetCategoryNavigation(): Promise<CategoryDTO[]> {
   await connectMongoose();
   const categories = await CategoryModel.find({ isActive: true })
+    .select("name slug description image sortOrder")
     .sort({ sortOrder: 1 })
     .lean();
 
@@ -233,7 +234,8 @@ export async function rawGetFeaturedProducts(limit: number): Promise<ProductCard
     isFeatured: true,
     categoryId: { $in: activeCategoryIds },
   })
-    .populate("categoryId")
+    .select("name slug categoryId fulfillmentType basePriceAmount currency images variants isFeatured preparationDaysMin preparationDaysMax publishedAt createdAt")
+    .populate({ path: "categoryId", select: "name isActive" })
     .sort({ publishedAt: -1, createdAt: -1 })
     .limit(limit)
     .lean();
@@ -245,7 +247,8 @@ export async function rawGetProductBySlug(slug: string): Promise<ProductDetailDT
   await connectMongoose();
 
   const product = await ProductModel.findOne({ slug, status: "ACTIVE" })
-    .populate("categoryId")
+    .select("name slug description categoryId fulfillmentType basePriceAmount currency materials colors tags dimensions personalizationAvailable personalizationInstructions preparationDaysMin preparationDaysMax careInstructions images variants isFeatured publishedAt")
+    .populate({ path: "categoryId", select: "name isActive" })
     .lean();
 
   if (!product) {
@@ -263,70 +266,15 @@ export async function rawGetProductBySlug(slug: string): Promise<ProductDetailDT
 export async function rawGetCategoryBySlug(slug: string): Promise<CategoryDTO> {
   await connectMongoose();
 
-  const category = await CategoryModel.findOne({ slug, isActive: true }).lean();
+  const category = await CategoryModel.findOne({ slug, isActive: true })
+    .select("name slug description image sortOrder")
+    .lean();
 
   if (!category) {
     throw new NotFoundError("Category not found");
   }
 
   return mapCategoryToDTO(category);
-}
-
-export async function rawGetProductMetadataBySlug(slug: string): Promise<{ id: string; categoryId: string }> {
-  await connectMongoose();
-  const product = await ProductModel.findOne({ slug, status: "ACTIVE" })
-    .select("_id categoryId")
-    .lean();
-
-  if (!product) {
-    throw new NotFoundError("Product not found");
-  }
-
-  const categoryIdStr = typeof product.categoryId === "string" 
-    ? product.categoryId 
-    : (product.categoryId as { toString(): string }).toString();
-
-  return {
-    id: product._id.toString(),
-    categoryId: categoryIdStr,
-  };
-}
-
-export async function getProductMetadataBySlug(slug: string): Promise<{ id: string; categoryId: string }> {
-  return unstable_cache(
-    async (s: string) => rawGetProductMetadataBySlug(s),
-    ["product-metadata-by-slug", slug],
-    {
-      tags: [CACHE_TAGS.product(slug)],
-      revalidate: 3600
-    }
-  )(slug);
-}
-
-export async function rawGetCategoryMetadataBySlug(slug: string): Promise<{ id: string }> {
-  await connectMongoose();
-  const category = await CategoryModel.findOne({ slug, isActive: true })
-    .select("_id")
-    .lean();
-
-  if (!category) {
-    throw new NotFoundError("Category not found");
-  }
-
-  return {
-    id: category._id.toString(),
-  };
-}
-
-export async function getCategoryMetadataBySlug(slug: string): Promise<{ id: string }> {
-  return unstable_cache(
-    async (s: string) => rawGetCategoryMetadataBySlug(s),
-    ["category-metadata-by-slug", slug],
-    {
-      tags: [CACHE_TAGS.category(slug)],
-      revalidate: 3600
-    }
-  )(slug);
 }
 
 export const getCategoryNavigation = unstable_cache(
@@ -363,16 +311,13 @@ export async function getFeaturedProducts(limit = 8): Promise<ProductCardDTO[]> 
 }
 
 export async function getProductBySlug(slug: string): Promise<ProductDetailDTO> {
-  const meta = await getProductMetadataBySlug(slug);
   return unstable_cache(
     async (s: string) => rawGetProductBySlug(s),
     ["product-by-slug", slug],
     {
       tags: [
-        CACHE_TAGS.product(meta.id),
         CACHE_TAGS.product(slug),
-        CACHE_TAGS.products,
-        CACHE_TAGS.category(meta.categoryId)
+        CACHE_TAGS.categories
       ],
       revalidate: 3600
     }
@@ -380,13 +325,11 @@ export async function getProductBySlug(slug: string): Promise<ProductDetailDTO> 
 }
 
 export async function getCategoryBySlug(slug: string): Promise<CategoryDTO> {
-  const meta = await getCategoryMetadataBySlug(slug);
   return unstable_cache(
     async (s: string) => rawGetCategoryBySlug(s),
     ["category-by-slug", slug],
     {
       tags: [
-        CACHE_TAGS.category(meta.id),
         CACHE_TAGS.category(slug),
         CACHE_TAGS.categories
       ],
@@ -421,38 +364,24 @@ export function revalidateCategoryCache(id: string, slug?: string) {
   updateTag(CACHE_TAGS.home);
 }
 
-// --- Non-Cached / Dynamic Queries ---
+// --- Public catalog queries ---
 
-export async function getRelatedProducts(
+export async function rawGetRelatedProducts(
   productId: string,
+  categoryId: string,
   limit = 4
 ): Promise<ProductCardDTO[]> {
   await connectMongoose();
 
   const strictLimit = Math.min(8, Math.max(1, limit));
 
-  const product = await ProductModel.findById(productId).select("categoryId").lean();
-  if (!product) {
-    return [];
-  }
-
-  const category = await CategoryModel.findOne({
-    _id: product.categoryId,
-    isActive: true,
-  })
-    .select("_id")
-    .lean();
-
-  if (!category) {
-    return [];
-  }
-
   const related = await ProductModel.find({
-    _id: { $ne: product._id },
+    _id: { $ne: productId },
     status: "ACTIVE",
-    categoryId: category._id,
+    categoryId,
   })
-    .populate("categoryId")
+    .select("name slug categoryId fulfillmentType basePriceAmount currency images variants isFeatured preparationDaysMin preparationDaysMax publishedAt createdAt")
+    .populate({ path: "categoryId", select: "name isActive" })
     .sort({ publishedAt: -1, createdAt: -1 })
     .limit(strictLimit)
     .lean();
@@ -460,17 +389,35 @@ export async function getRelatedProducts(
   return related.map(mapProductToCardDTO);
 }
 
-export async function listCatalogProducts(
-  filters: CatalogFilters
+export async function getRelatedProducts(
+  productId: string,
+  categoryId: string,
+  limit = 4
+): Promise<ProductCardDTO[]> {
+  const strictLimit = Math.min(8, Math.max(1, limit));
+
+  return unstable_cache(
+    async (resolvedProductId: string, resolvedCategoryId: string, resolvedLimit: number) =>
+      rawGetRelatedProducts(resolvedProductId, resolvedCategoryId, resolvedLimit),
+    ["related-products", productId, categoryId, String(strictLimit)],
+    {
+      tags: [
+        CACHE_TAGS.products,
+        CACHE_TAGS.product(productId),
+        CACHE_TAGS.category(categoryId),
+      ],
+      revalidate: 3600,
+    }
+  )(productId, categoryId, strictLimit);
+}
+
+export async function rawListCatalogProducts(
+  filters: CatalogFilters,
+  resolvedCategoryIds?: string[]
 ): Promise<PaginatedCatalogProducts> {
   await connectMongoose();
 
   const parsed = catalogFiltersSchema.parse(filters);
-
-  const activeCategories = await CategoryModel.find({ isActive: true })
-    .select("_id")
-    .lean();
-  const activeCategoryIds = activeCategories.map((c) => c._id);
 
   const query: {
     status: string;
@@ -484,16 +431,12 @@ export async function listCatalogProducts(
   } = { status: "ACTIVE" };
 
   if (parsed.categorySlug) {
-    const category = await CategoryModel.findOne({
-      slug: parsed.categorySlug,
-      isActive: true,
-    }).lean();
-
-    if (!category) {
-      throw new NotFoundError("Category not found");
-    }
-    query.categoryId = category._id;
+    const categoryId = resolvedCategoryIds?.[0]
+      ?? (await rawGetCategoryBySlug(parsed.categorySlug)).id;
+    query.categoryId = categoryId;
   } else {
+    const activeCategoryIds = resolvedCategoryIds
+      ?? (await rawGetCategoryNavigation()).map((category) => category.id);
     query.categoryId = { $in: activeCategoryIds };
   }
 
@@ -551,10 +494,10 @@ export async function listCatalogProducts(
   }
 
   const skip = (parsed.page - 1) * parsed.limit;
-  const total = await ProductModel.countDocuments(query);
 
   const productsQuery = ProductModel.find(query)
-    .populate("categoryId")
+    .select("name slug categoryId fulfillmentType basePriceAmount currency images variants isFeatured preparationDaysMin preparationDaysMax publishedAt createdAt")
+    .populate({ path: "categoryId", select: "name isActive" })
     .sort(sortQuery)
     .skip(skip)
     .limit(parsed.limit);
@@ -563,7 +506,10 @@ export async function listCatalogProducts(
     productsQuery.select({ score: { $meta: "textScore" } });
   }
 
-  const products = await productsQuery.lean();
+  const [total, products] = await Promise.all([
+    ProductModel.countDocuments(query),
+    productsQuery.lean(),
+  ]);
 
   return {
     products: products.map(mapProductToCardDTO),
@@ -572,6 +518,40 @@ export async function listCatalogProducts(
     limit: parsed.limit,
     totalPages: Math.ceil(total / parsed.limit),
   };
+}
+
+function isBoundedCacheableCatalogQuery(filters: CatalogFilters) {
+  return !filters.search
+    && !filters.material
+    && !filters.color
+    && filters.minPrice === undefined
+    && filters.maxPrice === undefined
+    && (filters.page ?? 1) <= 10
+    && (filters.limit ?? 12) <= 12;
+}
+
+export async function listCatalogProducts(
+  filters: CatalogFilters
+): Promise<PaginatedCatalogProducts> {
+  const parsed = catalogFiltersSchema.parse(filters);
+  const resolvedCategoryIds = parsed.categorySlug
+    ? [(await getCategoryBySlug(parsed.categorySlug)).id]
+    : (await getCategoryNavigation()).map((category) => category.id);
+
+  if (!isBoundedCacheableCatalogQuery(parsed)) {
+    return rawListCatalogProducts(parsed, resolvedCategoryIds);
+  }
+
+  const cacheKey = JSON.stringify(parsed);
+  const tags: string[] = [CACHE_TAGS.products, CACHE_TAGS.categories];
+  if (parsed.categorySlug) tags.push(CACHE_TAGS.category(parsed.categorySlug));
+
+  return unstable_cache(
+    async (resolvedFilters: CatalogFilters, categoryIds: string[]) =>
+      rawListCatalogProducts(resolvedFilters, categoryIds),
+    ["catalog-products", cacheKey],
+    { tags, revalidate: 900 }
+  )(parsed, resolvedCategoryIds);
 }
 
 export async function rawGetAvailableFilterMetadata(): Promise<{
@@ -605,6 +585,29 @@ export const getAvailableFilterMetadata = unstable_cache(
   {
     tags: [CACHE_TAGS.products],
     revalidate: 3600
+  }
+);
+
+export async function rawGetPublicProductSlugs(): Promise<string[]> {
+  await connectMongoose();
+  const activeCategories = await rawGetCategoryNavigation();
+  const products = await ProductModel.find({
+    status: "ACTIVE",
+    categoryId: { $in: activeCategories.map((category) => category.id) },
+  })
+    .select("slug")
+    .sort({ publishedAt: -1, createdAt: -1 })
+    .lean();
+
+  return products.map((product) => product.slug);
+}
+
+export const getPublicProductSlugs = unstable_cache(
+  rawGetPublicProductSlugs,
+  ["public-product-slugs"],
+  {
+    tags: [CACHE_TAGS.products, CACHE_TAGS.categories],
+    revalidate: 3600,
   }
 );
 

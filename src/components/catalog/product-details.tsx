@@ -4,13 +4,9 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  type ProductDetailDTO,
-  type ProductCardDTO,
-} from "@/modules/catalog/dto";
+import { type ProductDetailDTO } from "@/modules/catalog/dto";
 import { formatEGP } from "@/lib/money";
 import { Button } from "@/components/ui/button";
-import { ProductCard } from "@/components/shared/product-card";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/lib/auth/auth-client";
 import { toast } from "@/components/ui/toast";
@@ -19,14 +15,12 @@ import { WishlistButton } from "@/components/wishlist/wishlist-button";
 
 interface ProductDetailsProps {
   product: ProductDetailDTO;
-  relatedProducts: ProductCardDTO[];
   categoryName?: string;
   categorySlug?: string;
 }
 
 export function ProductDetails({
   product,
-  relatedProducts,
   categoryName,
   categorySlug,
 }: ProductDetailsProps) {
@@ -494,22 +488,6 @@ export function ProductDetails({
           </div>
         </div>
       </main>
-
-      {/* Related Products Grid */}
-      {relatedProducts.length > 0 && (
-        <section className="border-t border-outline-variant py-16 sm:py-20 lg:py-24 bg-surface">
-          <div className="mx-auto max-w-[100rem] px-5 sm:px-8 lg:px-12">
-            <h2 className="font-serif text-3xl tracking-tight text-on-background mb-10">
-              Related Pieces
-            </h2>
-            <div className="grid grid-cols-1 gap-x-5 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
-              {relatedProducts.map((prod) => (
-                <ProductCard key={prod.id} product={prod} />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* Sticky Mobile Purchase Viewport Overlay Footer */}
       {!isOutOfStock && (
