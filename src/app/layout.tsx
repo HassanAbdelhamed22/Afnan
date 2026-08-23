@@ -33,7 +33,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${ebGaramond.variable} ${manrope.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-background text-on-background transition-colors duration-300">
+      <body
+        className="min-h-full flex flex-col bg-background text-on-background transition-colors duration-300"
+        suppressHydrationWarning
+      >
         <ThemeProvider>
           <WishlistProvider>
             <Header />

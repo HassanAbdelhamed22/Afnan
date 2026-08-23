@@ -108,6 +108,84 @@ async function main() {
       sortOrder: 7,
       isActive: false, // Inactive category
     },
+    {
+      name: "Handbags / Shoulder Bags",
+      slug: "handbags-shoulder-bags",
+      description: "Elegant handcrafted shoulder bags featuring unique weaves and designs.",
+      image: {
+        url: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=800",
+        publicId: "shoulder-bags-main",
+        width: 800,
+        height: 1000,
+      },
+      sortOrder: 8,
+      isActive: true,
+    },
+    {
+      name: "Handbags / Mini Bags",
+      slug: "handbags-mini-bags",
+      description: "Charming mini woven and crochet shoulder bags for your essential items.",
+      image: {
+        url: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=800",
+        publicId: "mini-bags-main",
+        width: 800,
+        height: 1000,
+      },
+      sortOrder: 9,
+      isActive: true,
+    },
+    {
+      name: "Handbags / Crossbody Bags",
+      slug: "handbags-crossbody-bags",
+      description: "Beautiful handcrafted crossbody bags combining classic crochet and leather features.",
+      image: {
+        url: "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?q=80&w=800",
+        publicId: "crossbody-bags-main",
+        width: 800,
+        height: 1000,
+      },
+      sortOrder: 10,
+      isActive: true,
+    },
+    {
+      name: "Handbags / Beach & Tote Bags",
+      slug: "handbags-beach-tote-bags",
+      description: "Spacious handcrafted straw and woven tote bags designed for sunny beach days.",
+      image: {
+        url: "https://images.unsplash.com/photo-1579656381226-5fc0f0100c3b?q=80&w=800",
+        publicId: "beach-totes-main",
+        width: 800,
+        height: 1000,
+      },
+      sortOrder: 11,
+      isActive: true,
+    },
+    {
+      name: "Handbags / Mini Crossbody Bags",
+      slug: "handbags-mini-crossbody-bags",
+      description: "Compact and stylish mini crossbody bags with detailed woven and tassel finishes.",
+      image: {
+        url: "https://images.unsplash.com/photo-1547949003-9792a18a2601?q=80&w=800",
+        publicId: "mini-crossbodies-main",
+        width: 800,
+        height: 1000,
+      },
+      sortOrder: 12,
+      isActive: true,
+    },
+    {
+      name: "Accessories / Scarves",
+      slug: "accessories-scarves",
+      description: "Soft, hand-finished crochet and woolen scarves to keep you warm in style.",
+      image: {
+        url: "https://images.unsplash.com/photo-1584992236310-6edddc08acff?q=80&w=800",
+        publicId: "accessories-scarves-main",
+        width: 800,
+        height: 1000,
+      },
+      sortOrder: 13,
+      isActive: true,
+    },
   ]);
 
   const [
@@ -118,6 +196,12 @@ async function main() {
     catBrass,
     catToys,
     catInactive,
+    catShoulderBags,
+    catMiniBags,
+    catCrossbodyBags,
+    catBeachToteBags,
+    catMiniCrossbodyBags,
+    catScarves,
   ] = categories;
 
   console.log("Seeding products...");
@@ -828,6 +912,364 @@ async function main() {
       ],
       isFeatured: false,
       publishedAt: new Date("2026-08-06T12:00:00Z"),
+    },
+    // 16. Black Pleated Woven Evening Bag
+    {
+      name: "Black Pleated Woven Evening Bag",
+      slug: "black-pleated-woven-evening-bag",
+      description: "Elegant handcrafted black shoulder bag featuring a textured pleated woven design, zip-top closure, silver-tone chain strap, and decorative vintage-inspired metal charms. A sophisticated statement piece suitable for evening occasions and special events.",
+      categoryId: catShoulderBags._id,
+      status: "DRAFT",
+      fulfillmentType: "READY_MADE",
+      basePriceAmount: 85000, // EGP 850.00
+      currency: "EGP",
+      materials: ["Textile ribbon yarn", "fabric lining", "metal zipper", "metal chain", "metal charms"],
+      colors: ["Black", "Silver"],
+      tags: ["handmade", "woven", "black bag", "evening bag", "shoulder bag", "chain bag", "textured bag"],
+      dimensions: { width: 30, height: 22, depth: 8, unit: "cm" },
+      careInstructions: "Spot clean gently with a soft damp cloth. Do not machine wash. Keep away from excessive moisture and store in a dry place.",
+      personalizationAvailable: true,
+      personalizationInstructions: "Customer may request alternative colors or hardware subject to material availability.",
+      images: [
+        {
+          url: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=800",
+          publicId: "woven-evening-bag-1",
+          width: 800,
+          height: 1000,
+        },
+      ],
+      variants: [
+        {
+          sku: "BAG-WOV-BLK-01",
+          label: "Black / Silver",
+          optionValues: new Map([["color", "Black"], ["hardware", "Silver"]]),
+          stockQuantity: 5,
+          isActive: true,
+        },
+      ],
+      isFeatured: true,
+    },
+    // 17. Blush Pink & Ivory Woven Mini Bag
+    {
+      name: "Blush Pink & Ivory Woven Mini Bag",
+      slug: "blush-pink-ivory-woven-mini-bag",
+      description: "Charming handcrafted mini shoulder bag combining blush pink and ivory woven detailing. Finished with an elegant flap, gold-tone clasp, decorative side tassel, and delicate chain strap. Ideal for casual outings, celebrations, and feminine evening looks.",
+      categoryId: catMiniBags._id,
+      status: "DRAFT",
+      fulfillmentType: "READY_MADE",
+      basePriceAmount: 60000, // EGP 600.00
+      currency: "EGP",
+      materials: ["Cord yarn", "textile yarn", "metal clasp", "metal chain", "tassel"],
+      colors: ["Blush Pink", "Ivory", "Gold"],
+      tags: ["handmade", "pink bag", "ivory bag", "mini bag", "woven bag", "feminine", "chain bag"],
+      dimensions: { width: 20, height: 14, depth: 6, unit: "cm" },
+      careInstructions: "Gently spot clean only. Avoid soaking and harsh detergents. Store away from moisture and direct sunlight.",
+      personalizationAvailable: true,
+      personalizationInstructions: "Color combinations may be customized depending on yarn availability.",
+      images: [
+        {
+          url: "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?q=80&w=800",
+          publicId: "mini-woven-bag-1",
+          width: 800,
+          height: 1000,
+        },
+      ],
+      variants: [
+        {
+          sku: "BAG-WOV-PNK-IVR-01",
+          label: "Blush Pink / Ivory",
+          optionValues: new Map([["color", "Blush Pink & Ivory"]]),
+          stockQuantity: 8,
+          isActive: true,
+        },
+      ],
+      isFeatured: true,
+    },
+    // 18. Chocolate Brown Crochet Shoulder Bag
+    {
+      name: "Chocolate Brown Crochet Shoulder Bag",
+      slug: "chocolate-brown-crochet-shoulder-bag",
+      description: "Handcrafted chocolate brown crochet shoulder bag with a structured rectangular silhouette and detailed textured stitching. Features a secure top zipper, gold-tone hardware, and an adjustable brown shoulder strap for practical everyday styling.",
+      categoryId: catShoulderBags._id,
+      status: "DRAFT",
+      fulfillmentType: "READY_MADE",
+      basePriceAmount: 75000, // EGP 750.00
+      currency: "EGP",
+      materials: ["Crochet cord yarn", "faux leather strap", "metal zipper", "metal hardware"],
+      colors: ["Chocolate Brown", "Gold"],
+      tags: ["crochet", "handmade", "brown bag", "shoulder bag", "zipper bag", "everyday bag"],
+      dimensions: { width: 28, height: 15, depth: 9, unit: "cm" },
+      careInstructions: "Spot clean using a lightly damp cloth. Do not machine wash. Avoid pulling the crochet stitches or exposing the bag to prolonged moisture.",
+      personalizationAvailable: true,
+      personalizationInstructions: "Yarn color and strap color may be customized subject to availability.",
+      images: [
+        {
+          url: "https://images.unsplash.com/photo-1547949003-9792a18a2601?q=80&w=800",
+          publicId: "crochet-shoulder-bag-1",
+          width: 800,
+          height: 1000,
+        },
+      ],
+      variants: [
+        {
+          sku: "BAG-CRO-BRN-01",
+          label: "Chocolate Brown",
+          optionValues: new Map([["color", "Chocolate Brown"]]),
+          stockQuantity: 6,
+          isActive: true,
+        },
+      ],
+      isFeatured: false,
+    },
+    // 19. Chocolate Crochet Bow Crossbody Bag
+    {
+      name: "Chocolate Crochet Bow Crossbody Bag",
+      slug: "chocolate-crochet-bow-crossbody-bag",
+      description: "Feminine handcrafted crossbody bag combining a rich chocolate crochet body with a statement cream faux-leather bow flap. Finished with matching cream shoulder strap and gold-tone fittings for an elegant contrasting look.",
+      categoryId: catCrossbodyBags._id,
+      status: "DRAFT",
+      fulfillmentType: "READY_MADE",
+      basePriceAmount: 80000, // EGP 800.00
+      currency: "EGP",
+      materials: ["Crochet cord yarn", "faux leather", "metal hardware"],
+      colors: ["Chocolate Brown", "Cream", "Gold"],
+      tags: ["crochet", "bow bag", "handmade", "crossbody", "brown bag", "cream bag", "feminine"],
+      dimensions: { width: 22, height: 16, depth: 7, unit: "cm" },
+      careInstructions: "Spot clean the crochet and faux-leather sections separately with a soft damp cloth. Do not soak or machine wash.",
+      personalizationAvailable: true,
+      personalizationInstructions: "Customer may select available crochet and bow colors.",
+      images: [
+        {
+          url: "https://images.unsplash.com/photo-1591561954557-26941169b49e?q=80&w=800",
+          publicId: "crochet-bow-bag-1",
+          width: 800,
+          height: 1000,
+        },
+      ],
+      variants: [
+        {
+          sku: "BAG-CRO-BOW-BRN-01",
+          label: "Chocolate / Cream",
+          optionValues: new Map([["body", "Chocolate Brown"], ["bow", "Cream"]]),
+          stockQuantity: 4,
+          isActive: true,
+        },
+      ],
+      isFeatured: true,
+    },
+    // 20. Natural Straw Tote with Colorful Trim
+    {
+      name: "Natural Straw Tote with Colorful Trim",
+      slug: "natural-straw-tote-colorful-trim",
+      description: "Spacious handcrafted natural straw tote decorated with vibrant multicolor woven trim and metallic sequin detailing. Finished with long white rope handles for a relaxed summer and beach-inspired style.",
+      categoryId: catBeachToteBags._id,
+      status: "DRAFT",
+      fulfillmentType: "READY_MADE",
+      basePriceAmount: 95000, // EGP 950.00
+      currency: "EGP",
+      materials: ["Natural woven straw", "cotton rope", "textile trim", "decorative sequins"],
+      colors: ["Natural", "White", "Multicolor"],
+      tags: ["straw bag", "beach bag", "tote", "summer", "handmade", "boho"],
+      dimensions: { width: 45, height: 30, depth: 15, unit: "cm" },
+      careInstructions: "Keep dry. Wipe gently with a soft cloth. Do not soak or machine wash. Store upright in a dry area to preserve shape.",
+      personalizationAvailable: true,
+      images: [
+        {
+          url: "https://images.unsplash.com/photo-1579656381226-5fc0f0100c3b?q=80&w=800",
+          publicId: "straw-tote-colorful-1",
+          width: 800,
+          height: 1000,
+        },
+      ],
+      variants: [
+        {
+          sku: "TOTE-STRAW-MULTI-01",
+          label: "Multicolor Trim",
+          optionValues: new Map([["trim", "Multicolor"]]),
+          stockQuantity: 10,
+          isActive: true,
+        },
+      ],
+      isFeatured: true,
+    },
+    // 21. Natural Boho Straw Tote
+    {
+      name: "Natural Boho Straw Tote",
+      slug: "natural-boho-straw-tote",
+      description: "Handmade woven straw tote with neutral bohemian embroidery, decorative hanging coins, colorful geometric accents, and soft white rope handles. A spacious statement bag designed for summer outings and beach days.",
+      categoryId: catBeachToteBags._id,
+      status: "DRAFT",
+      fulfillmentType: "READY_MADE",
+      basePriceAmount: 105000, // EGP 1,050.00
+      currency: "EGP",
+      materials: ["Natural woven straw", "cotton rope", "embroidered trim", "decorative metal coins"],
+      colors: ["Natural", "White", "Bronze", "Multicolor"],
+      tags: ["boho", "straw tote", "beach bag", "handmade", "summer bag", "woven"],
+      dimensions: { width: 40, height: 32, depth: 15, unit: "cm" },
+      careInstructions: "Keep away from water and prolonged humidity. Gently wipe clean and store without crushing.",
+      personalizationAvailable: true,
+      images: [
+        {
+          url: "https://images.unsplash.com/photo-1598532187856-3b2363137b8f?q=80&w=800",
+          publicId: "straw-tote-boho-1",
+          width: 800,
+          height: 1000,
+        },
+      ],
+      variants: [
+        {
+          sku: "TOTE-STRAW-BOHO-01",
+          label: "Boho Trim",
+          optionValues: new Map([["style", "Boho"]]),
+          stockQuantity: 7,
+          isActive: true,
+        },
+      ],
+      isFeatured: true,
+    },
+    // 22. Black Crochet Tassel Mini Crossbody
+    {
+      name: "Black Crochet Tassel Mini Crossbody",
+      slug: "black-crochet-tassel-mini-crossbody",
+      description: "Compact handcrafted black crochet crossbody bag featuring textured braided stitching, a secure zipper closure, oversized tassel charm, silver-tone chain strap, and decorative vintage-inspired charm.",
+      categoryId: catMiniCrossbodyBags._id,
+      status: "DRAFT",
+      fulfillmentType: "READY_MADE",
+      basePriceAmount: 45000, // EGP 450.00
+      currency: "EGP",
+      materials: ["Crochet cord yarn", "metal zipper", "metal chain", "textile tassel", "metal charm"],
+      colors: ["Black", "Silver"],
+      tags: ["crochet", "mini bag", "black bag", "tassel", "chain bag", "handmade"],
+      dimensions: { width: 12, height: 20, depth: 7, unit: "cm" },
+      careInstructions: "Spot clean gently. Avoid pulling tassel threads or crochet stitches. Keep metal hardware dry.",
+      personalizationAvailable: true,
+      personalizationInstructions: "Yarn, tassel, and hardware colors may be customized subject to availability.",
+      images: [
+        {
+          url: "https://images.unsplash.com/photo-1622434641406-a158123450f9?q=80&w=800",
+          publicId: "crochet-tassel-crossbody-1",
+          width: 800,
+          height: 1000,
+        },
+      ],
+      variants: [
+        {
+          sku: "BAG-CRO-BLK-TAS-01",
+          label: "Black / Silver",
+          optionValues: new Map([["color", "Black"], ["hardware", "Silver"]]),
+          stockQuantity: 12,
+          isActive: true,
+        },
+      ],
+      isFeatured: true,
+    },
+    // 23. Soft Grey Handmade Crochet Scarf
+    {
+      name: "Soft Grey Handmade Crochet Scarf",
+      slug: "soft-grey-handmade-crochet-scarf",
+      description: "Soft handcrafted grey crochet scarf featuring a textured open-stitch pattern and long hand-finished fringe. Designed as a warm, versatile accessory for casual autumn and winter styling.",
+      categoryId: catScarves._id,
+      status: "DRAFT",
+      fulfillmentType: "READY_MADE",
+      basePriceAmount: 38000, // EGP 380.00
+      currency: "EGP",
+      materials: ["Crochet yarn"],
+      colors: ["Light Grey"],
+      tags: ["crochet scarf", "handmade scarf", "grey scarf", "winter accessory", "fringe"],
+      dimensions: { width: 25, height: 170, unit: "cm" },
+      careInstructions: "Hand wash gently in cool water using mild detergent. Do not bleach. Reshape and lay flat to dry.",
+      personalizationAvailable: true,
+      personalizationInstructions: "Available yarn colors and scarf length may be customized.",
+      images: [
+        {
+          url: "https://images.unsplash.com/photo-1584992236310-6edddc08acff?q=80&w=800",
+          publicId: "crochet-scarf-1",
+          width: 800,
+          height: 1000,
+        },
+      ],
+      variants: [
+        {
+          sku: "SCARF-CRO-GRY-01",
+          label: "Light Grey",
+          optionValues: new Map([["color", "Light Grey"]]),
+          stockQuantity: 15,
+          isActive: true,
+        },
+      ],
+      isFeatured: false,
+    },
+    // 24. Silver Grey Macramé Chain Bag
+    {
+      name: "Silver Grey Macramé Chain Bag",
+      slug: "silver-grey-macrame-chain-bag",
+      description: "Sophisticated handcrafted silver-grey macramé shoulder bag showcasing an intricate geometric woven pattern. Finished with decorative silver-tone corner hardware, front clasp, and polished chain strap for an elegant contemporary look.",
+      categoryId: catShoulderBags._id,
+      status: "DRAFT",
+      fulfillmentType: "READY_MADE",
+      basePriceAmount: 90000, // EGP 900.00
+      currency: "EGP",
+      materials: ["Macramé cord", "metal clasp", "metal chain", "decorative metal corners"],
+      colors: ["Silver Grey", "Silver"],
+      tags: ["macrame", "grey bag", "handmade", "chain bag", "evening bag", "woven bag"],
+      dimensions: { width: 25, height: 17, depth: 7, unit: "cm" },
+      careInstructions: "Spot clean carefully using a soft cloth. Avoid soaking, machine washing, or prolonged contact with moisture.",
+      personalizationAvailable: true,
+      personalizationInstructions: "Cord and hardware colors may be customized based on available materials.",
+      images: [
+        {
+          url: "https://images.unsplash.com/photo-1566150905458-1bf1fc15aae9?q=80&w=800",
+          publicId: "macrame-chain-bag-1",
+          width: 800,
+          height: 1000,
+        },
+      ],
+      variants: [
+        {
+          sku: "BAG-MAC-GRY-01",
+          label: "Silver Grey",
+          optionValues: new Map([["color", "Silver Grey"], ["hardware", "Silver"]]),
+          stockQuantity: 5,
+          isActive: true,
+        },
+      ],
+      isFeatured: true,
+    },
+    // 25. Black Crochet & Leather Shoulder Bag
+    {
+      name: "Black Crochet & Leather Shoulder Bag",
+      slug: "black-crochet-leather-shoulder-bag",
+      description: "Modern handcrafted black shoulder bag combining rich crochet texture with smooth faux-leather panels. Features a practical front zip pocket, gold-tone zipper hardware, structured silhouette, and matching shoulder strap.",
+      categoryId: catShoulderBags._id,
+      status: "DRAFT",
+      fulfillmentType: "READY_MADE",
+      basePriceAmount: 95000, // EGP 950.00
+      currency: "EGP",
+      materials: ["Crochet cord yarn", "faux leather", "metal zipper", "metal hardware"],
+      colors: ["Black", "Gold"],
+      tags: ["crochet", "leather look", "black bag", "shoulder bag", "handmade", "zipper bag"],
+      dimensions: { width: 29, height: 17, depth: 9, unit: "cm" },
+      careInstructions: "Wipe faux-leather areas with a soft damp cloth and gently spot clean crochet sections. Do not soak or machine wash.",
+      personalizationAvailable: true,
+      personalizationInstructions: "Crochet body, leather panel, strap, and hardware colors may be customized depending on availability.",
+      images: [
+        {
+          url: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=800",
+          publicId: "crochet-leather-bag-1",
+          width: 800,
+          height: 1000,
+        },
+      ],
+      variants: [
+        {
+          sku: "BAG-CRO-LTH-BLK-01",
+          label: "Black / Gold",
+          optionValues: new Map([["color", "Black"], ["hardware", "Gold"]]),
+          stockQuantity: 6,
+          isActive: true,
+        },
+      ],
+      isFeatured: true,
     },
   ]);
 
