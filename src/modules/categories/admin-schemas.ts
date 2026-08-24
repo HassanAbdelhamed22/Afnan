@@ -22,5 +22,7 @@ export const categoryAdminFiltersSchema = z.object({
 
 export const categoryStatusInputSchema = z.object({ categoryId: objectIdSchema, isActive: z.boolean() });
 
+export const categoryDeleteInputSchema = z.object({ categoryId: objectIdSchema });
+
 export type CategoryAdminInput = z.infer<typeof categoryAdminInputSchema>;
 export type CategoryAdminFilters = z.infer<typeof categoryAdminFiltersSchema>;

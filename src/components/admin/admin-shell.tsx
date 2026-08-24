@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 
 const navigation = [
   { href: "/admin", label: "Overview", exact: true },
@@ -37,7 +38,7 @@ export function AdminShell({ children, adminName, adminEmail }: AdminShellProps)
         </Link>
         <p className="label-caps mt-2 text-on-surface-variant">Admin atelier</p>
       </div>
-      <nav aria-label="Admin navigation" className="flex-1 px-3 py-5">
+      <nav aria-label="Admin navigation" className="min-h-0 flex-1 overflow-y-auto px-3 py-5">
         <ul className="space-y-1">
           {navigation.map((item) => {
             const active = isActivePath(pathname, item);
@@ -60,10 +61,10 @@ export function AdminShell({ children, adminName, adminEmail }: AdminShellProps)
           })}
         </ul>
       </nav>
-      <div className="border-t border-outline-variant px-6 py-5">
+      <div className="shrink-0 border-t border-outline-variant px-6 py-5">
         <p className="body-sm font-medium text-on-background">{adminName}</p>
         <p className="body-sm break-all text-on-surface-variant">{adminEmail}</p>
-        <Link href="/" className="mt-4 inline-block label-caps underline underline-offset-4 hover:opacity-60">
+        <Link href="/" className="mt-4 block border border-primary px-4 py-3 text-center label-caps text-primary transition-colors hover:bg-primary hover:text-on-primary">
           View storefront
         </Link>
       </div>
@@ -72,7 +73,7 @@ export function AdminShell({ children, adminName, adminEmail }: AdminShellProps)
 
   return (
     <div className="min-h-screen bg-background text-on-background lg:grid lg:grid-cols-[17rem_minmax(0,1fr)]">
-      <aside className="hidden min-h-screen border-r border-outline-variant bg-surface lg:flex lg:flex-col">
+      <aside aria-label="Desktop admin sidebar" className="hidden border-r border-outline-variant bg-surface lg:sticky lg:top-0 lg:flex lg:h-screen lg:min-h-0 lg:self-start lg:flex-col">
         {navigationContent}
       </aside>
 
@@ -84,7 +85,7 @@ export function AdminShell({ children, adminName, adminEmail }: AdminShellProps)
             aria-label="Close admin navigation"
             onClick={() => setMobileOpen(false)}
           />
-          <aside id="admin-mobile-navigation" className="relative flex h-full w-[min(85vw,20rem)] flex-col border-r border-outline-variant bg-surface">
+          <aside id="admin-mobile-navigation" className="relative flex h-full w-[min(85vw,20rem)] flex-col overflow-y-auto border-r border-outline-variant bg-surface">
             {navigationContent}
           </aside>
         </div>
@@ -107,9 +108,12 @@ export function AdminShell({ children, adminName, adminEmail }: AdminShellProps)
               <p className="body-sm text-on-background">{activeItem?.label ?? "Admin"}</p>
             </div>
           </div>
-          <div className="hidden text-right sm:block">
-            <p className="body-sm font-medium">{adminName}</p>
-            <p className="label-caps text-on-surface-variant">Administrator</p>
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <div className="hidden text-right sm:block">
+              <p className="body-sm font-medium">{adminName}</p>
+              <p className="label-caps text-on-surface-variant">Administrator</p>
+            </div>
           </div>
         </header>
         <main className="px-5 py-8 lg:px-10 lg:py-10">{children}</main>

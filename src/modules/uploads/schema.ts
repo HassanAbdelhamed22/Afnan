@@ -20,7 +20,14 @@ export const MediaAssetSchema = new Schema(
       backgroundRemovalStatus: { type: String, enum: ["NOT_REQUESTED", "PROCESSING", "READY", "FAILED"], default: "NOT_REQUESTED" },
       enhancedApproved: { type: Boolean, default: false },
       backgroundColor: { type: String, enum: ["#F7F7F5"], default: "#F7F7F5" },
-      aspectRatio: { type: String, enum: ["4:5"], default: "4:5" },
+      aspectRatio: { type: String, enum: ["4:5", "1:1"], default: "4:5" },
+      fitMode: { type: String, enum: ["CONTAIN", "COVER", "STRETCH"] },
+      crop: {
+        x: { type: Number, min: 0, max: 100 },
+        y: { type: Number, min: 0, max: 100 },
+        width: { type: Number, min: 0.01, max: 100 },
+        height: { type: Number, min: 0.01, max: 100 },
+      },
     },
   },
   { _id: false }

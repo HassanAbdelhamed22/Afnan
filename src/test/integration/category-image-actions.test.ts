@@ -18,18 +18,18 @@ describe("category image actions", () => {
   });
 
   it("authorizes, attaches the verified intent, and invalidates category caches", async () => {
-    const form = new FormData(); form.set("categoryId", "507f1f77bcf86cd799439012"); form.set("intentId", "507f1f77bcf86cd799439013"); form.set("alt", "Woven basket collection");
+    const form = new FormData(); form.set("categoryId", "507f1f77bcf86cd799439012"); form.set("intentId", "507f1f77bcf86cd799439013"); form.set("alt", "Woven basket collection"); form.set("fitMode", "CONTAIN");
 
     const result = await attachCategoryImageAction(form);
 
-    expect(mocks.attach).toHaveBeenCalledWith("admin-1", "507f1f77bcf86cd799439012", "507f1f77bcf86cd799439013", "Woven basket collection");
+    expect(mocks.attach).toHaveBeenCalledWith("admin-1", "507f1f77bcf86cd799439012", "507f1f77bcf86cd799439013", "Woven basket collection", "CONTAIN", undefined);
     expect(mocks.categoryCache).toHaveBeenCalledWith("507f1f77bcf86cd799439012", "woven-baskets");
     expect(result.ok).toBe(true);
   });
 
   it("discards the completed upload when the category update fails", async () => {
     mocks.attach.mockRejectedValue(new Error("database unavailable"));
-    const form = new FormData(); form.set("categoryId", "507f1f77bcf86cd799439012"); form.set("intentId", "507f1f77bcf86cd799439013"); form.set("alt", "Woven basket collection");
+    const form = new FormData(); form.set("categoryId", "507f1f77bcf86cd799439012"); form.set("intentId", "507f1f77bcf86cd799439013"); form.set("alt", "Woven basket collection"); form.set("fitMode", "CONTAIN");
 
     const result = await attachCategoryImageAction(form);
 

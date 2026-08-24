@@ -90,10 +90,12 @@ export function mapCategoryToDTO(doc: DatabaseCategory): CategoryDTO {
     description: doc.description || undefined,
     image: doc.image
       ? {
-          url: doc.image.url,
+          url: resolveMediaUrl(doc.image),
           publicId: doc.image.publicId,
           width: doc.image.width,
           height: doc.image.height,
+          alt: doc.image.alt,
+          presentation: doc.image.presentation,
         }
       : undefined,
     sortOrder: doc.sortOrder,

@@ -9,6 +9,7 @@ import { connectMongoose } from "@/lib/mongoose";
 import { UploadIntentModel } from "@/modules/uploads/model";
 import { isOwnedUploadPublicId } from "@/modules/uploads/paths";
 import { deleteManagedUploadAsset } from "@/modules/uploads/service";
+import type { ImageCrop, ImageFitMode } from "@/modules/uploads/presentation";
 
 import { buildAttachedCategoryImage } from "./image-mapping";
 import { CategoryModel } from "./model";
@@ -18,7 +19,7 @@ async function deleteReplacedCategoryImage(publicId?: string) {
   await deleteManagedUploadAsset(publicId, "CATEGORY_IMAGE").catch((error) => logger.error("category_image_cleanup_failed", { errorName: error instanceof Error ? error.name : "UnknownError" }));
 }
 
-export async function attachCategoryImage(adminId: string, categoryId: string, intentId: string, alt: string) {
+export async function attachCategoryImage(adminId: string, categoryId: string, intentId: string, alt: string, fitMode: ImageFitMode, crop?: ImageCrop) {
   const mongoose = await connectMongoose();
   const session = await mongoose.startSession();
   let result: { id: string; slug: string; replacedPublicId?: string } | undefined;
@@ -32,7 +33,7 @@ export async function attachCategoryImage(adminId: string, categoryId: string, i
       const claimed = await UploadIntentModel.updateOne({ _id: intent._id, userId: adminId, status: "COMPLETED" }, { $set: { status: "CLAIMED" } }, { session });
       if (claimed.modifiedCount !== 1) throw new ConflictError("Category image was already used");
       const replacedPublicId = category.image?.publicId;
-      category.image = buildAttachedCategoryImage(intent.asset, alt);
+      category.image = buildAttachedCategoryImage(intent.asset, alt, fitMode, crop);
       await category.save({ session });
       result = { id: category._id.toString(), slug: category.slug, replacedPublicId };
     });

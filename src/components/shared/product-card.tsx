@@ -5,6 +5,7 @@ import { formatEGP } from "@/lib/money";
 import { Badge } from "@/components/ui/badge";
 import { ImagePlaceholder } from "@/components/ui/image-placeholder";
 import { WishlistButton } from "@/components/wishlist/wishlist-button";
+import { resolveImageFitMode } from "@/modules/uploads/presentation";
 
 export interface ProductCardProps {
   product: ProductCardDTO;
@@ -14,6 +15,7 @@ export interface ProductCardProps {
 
 export function ProductCard({ product, priority = false, wishlistSaved }: ProductCardProps) {
   const mainImage = product.images?.[0];
+  const imageFitMode = resolveImageFitMode(mainImage?.presentation);
   const isOutOfStock = product.fulfillmentType === "READY_MADE" && !product.inStock;
 
   return (
@@ -35,7 +37,7 @@ export function ProductCard({ product, priority = false, wishlistSaved }: Produc
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
             priority={priority}
-            className="object-cover transition-transform duration-500 ease-expo-out group-hover:scale-[1.035]"
+            className={`${imageFitMode === "STRETCH" ? "object-fill" : imageFitMode === "COVER" ? "object-cover" : "object-contain"} transition-transform duration-500 ease-expo-out group-hover:scale-[1.035]`}
           />
         ) : (
           <ImagePlaceholder aspectRatio="4-5" text="No image" className="border-0 bg-transparent" />

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { type CategoryDTO } from "@/modules/catalog/dto";
+import { resolveImageFitMode } from "@/modules/uploads/presentation";
 
 export interface CategoryCardProps {
   category: CategoryDTO;
@@ -8,18 +9,19 @@ export interface CategoryCardProps {
 
 export function CategoryCard({ category }: CategoryCardProps) {
   const mainImage = category.image;
+  const imageFitMode = resolveImageFitMode(mainImage?.presentation);
 
   return (
     <article className="w-full min-w-0">
       <Link href={`/category/${category.slug}`} className="group block text-on-background no-underline outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4">
-      <div className="relative flex aspect-4/5 w-full items-center justify-center overflow-hidden border border-outline-variant bg-surface transition-colors duration-300 ease-expo-out group-hover:border-primary sm:aspect-square">
+      <div className="relative flex aspect-square w-full items-center justify-center overflow-hidden border border-outline-variant bg-surface transition-colors duration-300 ease-expo-out group-hover:border-primary">
         {mainImage ? (
           <Image
             src={mainImage.url}
             alt={category.name}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            className="object-cover transition-transform ease-expo-out duration-500 group-hover:scale-105"
+            className={`${imageFitMode === "STRETCH" ? "object-fill" : imageFitMode === "COVER" ? "object-cover" : "object-contain"} transition-transform ease-expo-out duration-500 group-hover:scale-105`}
           />
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#eee8de] text-on-background">

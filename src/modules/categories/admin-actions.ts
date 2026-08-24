@@ -8,8 +8,8 @@ import { getZodFieldErrors } from "@/lib/utils";
 import { requireAdmin } from "@/modules/auth/dal";
 import { revalidateCategoryCache } from "@/modules/catalog/queries";
 
-import { saveAdminCategory, setAdminCategoryStatus } from "./admin-repository";
-import { categoryAdminInputSchema, categoryStatusInputSchema } from "./admin-schemas";
+import { deleteAdminCategory, saveAdminCategory, setAdminCategoryStatus } from "./admin-repository";
+import { categoryAdminInputSchema, categoryDeleteInputSchema, categoryStatusInputSchema } from "./admin-schemas";
 
 type CategoryActionData = { categoryId: string } | null;
 function text(formData: FormData, name: string) { const value = formData.get(name); return typeof value === "string" ? value.trim() : ""; }
@@ -46,5 +46,21 @@ export async function changeCategoryStatusAction(formData: FormData): Promise<Ac
   } catch (error) {
     if (error instanceof AppError) return actionFailure(error.code, error.message);
     return actionFailure("INTERNAL_ERROR", "Category status could not be updated");
+  }
+}
+
+export async function deleteCategoryAction(formData: FormData): Promise<ActionResult<CategoryActionData>> {
+  await requireAdmin();
+  const parsed = categoryDeleteInputSchema.safeParse({ categoryId: text(formData, "categoryId") });
+  if (!parsed.success) return actionFailure("VALIDATION_ERROR", "Invalid category removal request");
+  try {
+    const category = await deleteAdminCategory(parsed.data.categoryId);
+    revalidateCategoryCache(category.id, category.slug);
+    revalidatePath("/admin/categories");
+    revalidatePath(`/admin/categories/${category.id}`);
+    return actionSuccess({ categoryId: category.id }, "Category removed");
+  } catch (error) {
+    if (error instanceof AppError) return actionFailure(error.code, error.message);
+    return actionFailure("INTERNAL_ERROR", "Category could not be removed");
   }
 }

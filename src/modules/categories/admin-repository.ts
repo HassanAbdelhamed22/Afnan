@@ -39,7 +39,7 @@ export async function listAdminCategories(filters: CategoryAdminFilters): Promis
     categories: records.map((record) => {
       const count = countMap.get(record._id.toString());
       return { id: record._id.toString(), name: record.name, slug: record.slug, description: record.description,
-        image: record.image ? { url: record.image.url, publicId: record.image.publicId, width: record.image.width, height: record.image.height, bytes: record.image.bytes, format: record.image.format, alt: record.image.alt } : undefined,
+        image: record.image ? { url: record.image.url, publicId: record.image.publicId, width: record.image.width, height: record.image.height, bytes: record.image.bytes, format: record.image.format, alt: record.image.alt, presentation: record.image.presentation } : undefined,
         sortOrder: record.sortOrder, isActive: record.isActive, productCount: count?.total ?? 0,
         activeProductCount: count?.active ?? 0, updatedAt: record.updatedAt.toISOString() };
     }),
@@ -56,7 +56,7 @@ export async function getAdminCategory(categoryId: string): Promise<AdminCategor
     ProductModel.countDocuments({ categoryId: record._id }), ProductModel.countDocuments({ categoryId: record._id, status: "ACTIVE" }),
   ]);
   return { id: record._id.toString(), name: record.name, slug: record.slug, description: record.description,
-    image: record.image ? { url: record.image.url, publicId: record.image.publicId, width: record.image.width, height: record.image.height, bytes: record.image.bytes, format: record.image.format, alt: record.image.alt } : undefined,
+    image: record.image ? { url: record.image.url, publicId: record.image.publicId, width: record.image.width, height: record.image.height, bytes: record.image.bytes, format: record.image.format, alt: record.image.alt, presentation: record.image.presentation } : undefined,
     sortOrder: record.sortOrder, isActive: record.isActive, productCount, activeProductCount, updatedAt: record.updatedAt.toISOString() };
 }
 
@@ -87,5 +87,19 @@ export async function setAdminCategoryStatus(categoryId: string, isActive: boole
   }
   category.isActive = isActive;
   await category.save();
+  return { id: category._id.toString(), slug: category.slug };
+}
+
+export async function deleteAdminCategory(categoryId: string) {
+  await connectMongoose();
+  const category = await CategoryModel.findById(categoryId).select("slug isActive").lean();
+  if (!category) throw new NotFoundError("Category not found");
+  if (category.isActive) throw new InvalidStateError("Archive this category before removing it");
+
+  const hasProducts = await ProductModel.exists({ categoryId: category._id });
+  if (hasProducts) throw new InvalidStateError("Move or remove every product in this category before removing it");
+
+  const deleted = await CategoryModel.deleteOne({ _id: category._id, isActive: false });
+  if (deleted.deletedCount !== 1) throw new InvalidStateError("Category changed before it could be removed. Refresh and try again");
   return { id: category._id.toString(), slug: category.slug };
 }

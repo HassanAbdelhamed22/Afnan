@@ -8,8 +8,8 @@ import { getZodFieldErrors } from "@/lib/utils";
 import { requireAdmin } from "@/modules/auth/dal";
 import { revalidateProductCache, revalidateCategoryCache } from "@/modules/catalog/queries";
 
-import { saveAdminProduct, setAdminProductStatus } from "./admin-repository";
-import { productAdminInputSchema, productStatusInputSchema } from "./admin-schemas";
+import { deleteAdminProduct, saveAdminProduct, setAdminProductStatus } from "./admin-repository";
+import { productAdminInputSchema, productDeleteInputSchema, productStatusInputSchema } from "./admin-schemas";
 
 type ProductActionData = { productId: string } | null;
 
@@ -86,5 +86,24 @@ export async function changeProductStatusAction(formData: FormData): Promise<Act
   } catch (error) {
     if (error instanceof AppError) return actionFailure(error.code, error.message);
     return actionFailure("INTERNAL_ERROR", "Product status could not be updated");
+  }
+}
+
+export async function deleteProductAction(formData: FormData): Promise<ActionResult<ProductActionData>> {
+  await requireAdmin();
+  const parsed = productDeleteInputSchema.safeParse({ productId: text(formData, "productId") });
+  if (!parsed.success) return actionFailure("VALIDATION_ERROR", "Invalid product removal request");
+  try {
+    const product = await deleteAdminProduct(parsed.data.productId);
+    revalidateProductCache(product.id, product.slug);
+    revalidateCategoryCache(product.categoryId);
+    revalidatePath("/admin/products");
+    revalidatePath(`/admin/products/${product.id}`);
+    revalidatePath("/cart");
+    revalidatePath("/account/wishlist");
+    return actionSuccess({ productId: product.id }, "Product removed");
+  } catch (error) {
+    if (error instanceof AppError) return actionFailure(error.code, error.message);
+    return actionFailure("INTERNAL_ERROR", "Product could not be removed");
   }
 }

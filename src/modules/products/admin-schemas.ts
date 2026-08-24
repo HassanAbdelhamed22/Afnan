@@ -84,5 +84,7 @@ export const productStatusInputSchema = z.object({
   status: z.enum(["DRAFT", "ACTIVE", "ARCHIVED"]),
 });
 
+export const productDeleteInputSchema = z.object({ productId: objectIdSchema });
+
 export type ProductAdminInput = z.infer<typeof productAdminInputSchema>;
 export type ProductAdminFilters = z.infer<typeof productAdminFiltersSchema>;
