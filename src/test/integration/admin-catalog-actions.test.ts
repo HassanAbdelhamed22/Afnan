@@ -1,17 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  requireAdmin: vi.fn(), saveProduct: vi.fn(), saveCategory: vi.fn(),
+  requireAdmin: vi.fn(), saveProduct: vi.fn(), saveCategory: vi.fn(), deleteProduct: vi.fn(), deleteCategory: vi.fn(),
   revalidateProductCache: vi.fn(), revalidateCategoryCache: vi.fn(), revalidatePath: vi.fn(),
 }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
 vi.mock("@/modules/auth/dal", () => ({ requireAdmin: mocks.requireAdmin }));
-vi.mock("@/modules/products/admin-repository", () => ({ saveAdminProduct: mocks.saveProduct, setAdminProductStatus: vi.fn() }));
-vi.mock("@/modules/categories/admin-repository", () => ({ saveAdminCategory: mocks.saveCategory, setAdminCategoryStatus: vi.fn() }));
+vi.mock("@/modules/products/admin-repository", () => ({ deleteAdminProduct: mocks.deleteProduct, saveAdminProduct: mocks.saveProduct, setAdminProductStatus: vi.fn() }));
+vi.mock("@/modules/categories/admin-repository", () => ({ deleteAdminCategory: mocks.deleteCategory, saveAdminCategory: mocks.saveCategory, setAdminCategoryStatus: vi.fn() }));
 vi.mock("@/modules/catalog/queries", () => ({ revalidateProductCache: mocks.revalidateProductCache, revalidateCategoryCache: mocks.revalidateCategoryCache }));
 
-import { saveCategoryAction } from "@/modules/categories/admin-actions";
-import { saveProductAction } from "@/modules/products/admin-actions";
+import { deleteCategoryAction, saveCategoryAction } from "@/modules/categories/admin-actions";
+import { deleteProductAction, saveProductAction } from "@/modules/products/admin-actions";
 
 function productForm() {
   const form = new FormData();
@@ -45,5 +45,28 @@ describe("admin catalog actions", () => {
     const form = new FormData(); form.set("name", "Textile Art"); form.set("slug", "textile-art"); form.set("sortOrder", "3"); form.set("isActive", "on"); form.set("role", "ADMIN");
     const result = await saveCategoryAction({ ok: true, data: null }, form);
     expect(mocks.requireAdmin).toHaveBeenCalled(); expect(mocks.saveCategory).toHaveBeenCalledWith({ name: "Textile Art", slug: "textile-art", sortOrder: 3, isActive: true }); expect(result.ok).toBe(true);
+  });
+
+  it("authorizes product removal and invalidates product, category, cart, and wishlist views", async () => {
+    mocks.deleteProduct.mockResolvedValue({ id: "507f1f77bcf86cd799439012", slug: "linen-bag", categoryId: "507f1f77bcf86cd799439011" });
+    const form = new FormData(); form.set("productId", "507f1f77bcf86cd799439012");
+    const result = await deleteProductAction(form);
+    expect(mocks.requireAdmin).toHaveBeenCalledOnce();
+    expect(mocks.deleteProduct).toHaveBeenCalledWith("507f1f77bcf86cd799439012");
+    expect(mocks.revalidateProductCache).toHaveBeenCalledWith("507f1f77bcf86cd799439012", "linen-bag");
+    expect(mocks.revalidateCategoryCache).toHaveBeenCalledWith("507f1f77bcf86cd799439011");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/cart");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/account/wishlist");
+    expect(result.ok).toBe(true);
+  });
+
+  it("authorizes category removal and invalidates category views", async () => {
+    mocks.deleteCategory.mockResolvedValue({ id: "507f1f77bcf86cd799439011", slug: "textile-art" });
+    const form = new FormData(); form.set("categoryId", "507f1f77bcf86cd799439011");
+    const result = await deleteCategoryAction(form);
+    expect(mocks.requireAdmin).toHaveBeenCalledOnce();
+    expect(mocks.deleteCategory).toHaveBeenCalledWith("507f1f77bcf86cd799439011");
+    expect(mocks.revalidateCategoryCache).toHaveBeenCalledWith("507f1f77bcf86cd799439011", "textile-art");
+    expect(result.ok).toBe(true);
   });
 });

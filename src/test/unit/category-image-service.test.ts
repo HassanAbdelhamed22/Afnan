@@ -34,7 +34,7 @@ describe("category image service", () => {
     mocks.categoryFindById.mockReturnValue({ session: vi.fn(async () => category) });
     mocks.intentFindOne.mockReturnValue({ session: vi.fn(async () => intent) });
 
-    await expect(attachCategoryImage("admin-1", category._id.toString(), intent._id, "Woven basket collection")).resolves.toEqual({ id: category._id.toString(), slug: category.slug });
+    await expect(attachCategoryImage("admin-1", category._id.toString(), intent._id, "Woven basket collection", "CONTAIN")).resolves.toEqual({ id: category._id.toString(), slug: category.slug });
 
     expect(mocks.intentFindOne).toHaveBeenCalledWith(expect.objectContaining({ userId: "admin-1", purpose: "CATEGORY_IMAGE", status: "COMPLETED" }));
     expect(category.image).toMatchObject({ ...assetValues, alt: "Woven basket collection", isPrimary: true });

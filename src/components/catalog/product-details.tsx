@@ -8,6 +8,7 @@ import { type ProductDetailDTO } from "@/modules/catalog/dto";
 import { formatEGP } from "@/lib/money";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { resolveImageFitMode } from "@/modules/uploads/presentation";
 import { useSession } from "@/lib/auth/auth-client";
 import { toast } from "@/components/ui/toast";
 import { addToCartAction } from "@/modules/cart/actions";
@@ -172,7 +173,8 @@ export function ProductDetails({
                   fill
                   priority
                   className={cn(
-                    "object-cover transition-opacity duration-300 ease-expo-out",
+                    resolveImageFitMode(activeImage.presentation) === "STRETCH" ? "object-fill" : resolveImageFitMode(activeImage.presentation) === "COVER" ? "object-cover" : "object-contain",
+                    "transition-opacity duration-300 ease-expo-out",
                     imageFade ? "opacity-100" : "opacity-0",
                   )}
                 />
@@ -204,7 +206,7 @@ export function ProductDetails({
                         src={img.url}
                         alt={`Photo ${idx + 1}`}
                         fill
-                        className="object-cover"
+                        className={resolveImageFitMode(img.presentation) === "STRETCH" ? "object-fill" : resolveImageFitMode(img.presentation) === "COVER" ? "object-cover" : "object-contain"}
                       />
                     </button>
                   );

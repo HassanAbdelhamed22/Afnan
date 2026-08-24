@@ -8,7 +8,7 @@ const steps = [
 
 export function CustomRequestCta() {
   return (
-    <section className="border-b border-outline-variant bg-[#eee8de] py-20 sm:py-24 lg:py-28">
+    <section className="border-b border-outline-variant bg-[#eee8de] py-20 transition-colors duration-300 dark:bg-surface sm:py-24 lg:py-28">
       <div className="mx-auto grid max-w-[100rem] gap-12 px-5 sm:px-8 lg:grid-cols-12 lg:gap-8 lg:px-12">
         <div className="lg:col-span-7">
           <span className="mb-4 block font-sans text-[0.625rem] font-bold uppercase tracking-[0.2em] text-on-surface-variant">

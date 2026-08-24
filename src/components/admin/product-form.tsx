@@ -1,14 +1,19 @@
 "use client";
 
-import { startTransition, useActionState, useEffect, useMemo, useState, type FormEvent } from "react";
+import { startTransition, useActionState, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { AdminImageUploadField } from "@/components/admin/image-upload-field";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import type { ActionResult } from "@/lib/results/action-result";
-import { saveProductAction } from "@/modules/products/admin-actions";
+import { changeProductStatusAction, saveProductAction } from "@/modules/products/admin-actions";
+import { attachProductImageAction } from "@/modules/products/image-actions";
+import { discardClientUpload, uploadManagedImage } from "@/modules/uploads/client";
+import { type ImageCrop, type ImageFitMode } from "@/modules/uploads/presentation";
+import { MAX_PRODUCT_IMAGE_BYTES, PRODUCT_IMAGE_TYPES } from "@/modules/uploads/schemas";
 import type { AdminCategoryOptionDTO } from "@/modules/categories/admin-dto";
 import type { AdminProductDTO } from "@/modules/products/admin-dto";
 
@@ -33,6 +38,15 @@ function parseOptions(value: string) {
 export function ProductForm({ product, categories }: { product?: AdminProductDTO; categories: AdminCategoryOptionDTO[] }) {
   const router = useRouter();
   const [state, action, pending] = useActionState(saveProductAction, initialState);
+  const [creationFile, setCreationFile] = useState<File>();
+  const [creationAlt, setCreationAlt] = useState("");
+  const [creationCrop, setCreationCrop] = useState<ImageCrop>();
+  const [creationFitMode, setCreationFitMode] = useState<ImageFitMode>("CONTAIN");
+  const [creationImageError, setCreationImageError] = useState("");
+  const [stagedIntentId, setStagedIntentId] = useState("");
+  const [requestedStatus, setRequestedStatus] = useState<"DRAFT" | "ACTIVE" | "ARCHIVED">("DRAFT");
+  const [uploading, setUploading] = useState(false);
+  const completedProductId = useRef("");
   const [fulfillmentType, setFulfillmentType] = useState(product?.fulfillmentType ?? "READY_MADE");
   const [variants, setVariants] = useState<EditableVariant[]>(() => product?.variants.map((variant) => ({
     id: variant.id, sku: variant.sku, label: variant.label,
@@ -42,8 +56,28 @@ export function ProductForm({ product, categories }: { product?: AdminProductDTO
   const errors = state.ok ? undefined : state.error.fieldErrors;
 
   useEffect(() => {
-    if (state.ok && state.data?.productId && !product) router.replace(`/admin/products/${state.data.productId}`);
-  }, [product, router, state]);
+    const productId = state.ok ? state.data?.productId : undefined;
+    if (!productId || product || completedProductId.current === productId) return;
+    completedProductId.current = productId;
+    void (async () => {
+      if (stagedIntentId) {
+        const imageForm = new FormData(); imageForm.set("productId", productId); imageForm.set("intentId", stagedIntentId); imageForm.set("alt", creationAlt); imageForm.set("fitMode", creationFitMode); if (creationCrop) imageForm.set("crop", JSON.stringify(creationCrop));
+        const attached = await attachProductImageAction(imageForm);
+        if (!attached.ok) { router.replace(`/admin/products/${productId}?image=failed`); return; }
+        if (requestedStatus === "ACTIVE") {
+          const statusForm = new FormData(); statusForm.set("productId", productId); statusForm.set("status", "ACTIVE");
+          const activated = await changeProductStatusAction(statusForm);
+          if (!activated.ok) { router.replace(`/admin/products/${productId}?publish=failed`); return; }
+        }
+      }
+      router.replace(`/admin/products/${productId}`);
+    })();
+  }, [creationAlt, creationCrop, creationFitMode, product, requestedStatus, router, stagedIntentId, state]);
+
+  useEffect(() => {
+    if (state.ok || !stagedIntentId) return;
+    void discardClientUpload(stagedIntentId).catch(() => undefined);
+  }, [stagedIntentId, state]);
 
   const serializedVariants = useMemo(() => JSON.stringify(variants.map((variant) => ({
     id: variant.id, sku: variant.sku, label: variant.label, optionValues: parseOptions(variant.options),
@@ -58,7 +92,26 @@ export function ProductForm({ product, categories }: { product?: AdminProductDTO
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    startTransition(() => action(formData));
+    if (!product && creationFile && creationAlt.trim().length < 3) { setCreationImageError("Alt text is required and must contain at least 3 characters."); return; }
+    if (!product && creationFile && creationFitMode === "COVER" && !creationCrop) { setCreationImageError("Review the fill-frame composition before creating the product."); return; }
+    startTransition(async () => {
+      try {
+        setCreationImageError("");
+        if (!product && creationFile) {
+          setUploading(true);
+          const intentId = await uploadManagedImage(creationFile, "PRODUCT_IMAGE");
+          setStagedIntentId(intentId);
+          const status = formData.get("status") as "DRAFT" | "ACTIVE" | "ARCHIVED";
+          setRequestedStatus(status);
+          if (status === "ACTIVE") formData.set("status", "DRAFT");
+        }
+        startTransition(() => action(formData));
+      } catch (error) {
+        setCreationImageError(error instanceof Error ? error.message : "The image could not be uploaded.");
+      } finally {
+        setUploading(false);
+      }
+    });
   }
 
   return (
@@ -133,8 +186,17 @@ export function ProductForm({ product, categories }: { product?: AdminProductDTO
         </div>
       </section>
 
+      {!product ? (
+        <section className="border border-outline-variant bg-surface p-6">
+          <p className="label-caps text-on-surface-variant">Storefront presentation</p>
+          <h2 className="headline-sm mt-2">Product image</h2>
+          <p className="body-sm mt-3 text-on-surface-variant">Optional for drafts and required before an active product can be published.</p>
+          <div className="mt-6"><AdminImageUploadField file={creationFile} alt={creationAlt} crop={creationCrop} fitMode={creationFitMode} onFileChange={setCreationFile} onAltChange={(value) => { setCreationAlt(value); if (value.trim().length >= 3) setCreationImageError(""); }} onCropChange={setCreationCrop} onFitModeChange={setCreationFitMode} accept={PRODUCT_IMAGE_TYPES} maxBytes={MAX_PRODUCT_IMAGE_BYTES} aspect={4 / 5} frameLabel="4:5 product" recommendedWidth={1200} recommendedHeight={1500} disabled={pending || uploading} error={creationImageError} /></div>
+        </section>
+      ) : null}
+
       {!state.ok ? <p role="alert" className="border-l-2 border-error bg-error-container/30 px-4 py-3 body-sm text-error">{state.error.message}</p> : state.message ? <p role="status" className="border-l-2 border-primary bg-surface px-4 py-3 body-sm">{state.message}</p> : null}
-      <div className="flex justify-end border-t border-outline-variant pt-6"><Button type="submit" disabled={pending}>{pending ? "Saving…" : product ? "Save product" : "Create product"}</Button></div>
+      <div className="flex justify-end border-t border-outline-variant pt-6"><Button type="submit" disabled={pending || uploading}>{uploading ? "Uploading image…" : pending ? "Saving…" : product ? "Save product" : creationFile ? "Create product with image" : "Create product"}</Button></div>
     </form>
   );
 }

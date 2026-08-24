@@ -4,30 +4,36 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import { AdminImageUploadField } from "@/components/admin/image-upload-field";
 import { Button } from "@/components/ui/button";
 import { attachCategoryImageAction, removeCategoryImageAction } from "@/modules/categories/image-actions";
-import { CATEGORY_IMAGE_TYPES, MAX_CATEGORY_IMAGE_BYTES } from "@/modules/uploads/schemas";
 import { discardClientUpload, uploadManagedImage } from "@/modules/uploads/client";
+import { applyCloudinaryCrop, resolveImageFitMode, type ImageCrop, type ImageFitMode } from "@/modules/uploads/presentation";
+import { CATEGORY_IMAGE_TYPES, MAX_CATEGORY_IMAGE_BYTES } from "@/modules/uploads/schemas";
 import type { MediaAsset } from "@/modules/uploads/types";
 
 export function CategoryImageManager({ categoryId, categoryName, image }: { categoryId: string; categoryName: string; image?: MediaAsset }) {
   const router = useRouter();
   const [file, setFile] = useState<File>();
   const [alt, setAlt] = useState(image?.alt ?? `${categoryName} handmade collection`);
-  const [inputKey, setInputKey] = useState(0);
+  const [crop, setCrop] = useState<ImageCrop>();
+  const [fitMode, setFitMode] = useState<ImageFitMode>("COVER");
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState("");
+  const [fieldError, setFieldError] = useState("");
 
   const attach = () => startTransition(async () => {
-    if (!file || alt.trim().length < 3) { setMessage("Choose an image and provide meaningful alt text."); return; }
+    if (!file) { setFieldError("Choose an image before attaching it."); return; }
+    if (alt.trim().length < 3) { setFieldError("Alt text is required and must contain at least 3 characters."); return; }
+    if (fitMode === "COVER" && !crop) { setFieldError("Review the fill-frame composition before attaching the image."); return; }
     let intentId: string | undefined;
     try {
-      setMessage("Uploading category image…");
+      setFieldError(""); setMessage("Uploading category image…");
       intentId = await uploadManagedImage(file, "CATEGORY_IMAGE");
-      const form = new FormData(); form.set("categoryId", categoryId); form.set("intentId", intentId); form.set("alt", alt);
+      const form = new FormData(); form.set("categoryId", categoryId); form.set("intentId", intentId); form.set("alt", alt); form.set("fitMode", fitMode); if (crop) form.set("crop", JSON.stringify(crop));
       const result = await attachCategoryImageAction(form);
       if (!result.ok) throw new Error(result.error.message);
-      setFile(undefined); setInputKey((value) => value + 1); setMessage(result.message ?? "Category image attached"); router.refresh();
+      setFile(undefined); setCrop(undefined); setFitMode("COVER"); setMessage(result.message ?? "Category image attached"); router.refresh();
     } catch (error) {
       if (intentId) await discardClientUpload(intentId).catch(() => undefined);
       setMessage(error instanceof Error ? error.message : "Category image could not be attached");
@@ -45,16 +51,11 @@ export function CategoryImageManager({ categoryId, categoryName, image }: { cate
     <section className="mt-8 border border-outline-variant bg-surface p-6">
       <p className="label-caps text-on-surface-variant">Storefront presentation</p>
       <h2 className="headline-sm mt-2">Category image</h2>
-      <p className="body-sm mt-3 max-w-3xl text-on-surface-variant">Use a clear, well-lit image that represents the whole collection. A square or 4:5 composition works best across the storefront.</p>
-      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(14rem,20rem)_1fr]">
-        <div className="relative aspect-square overflow-hidden border border-outline-variant bg-[#F7F7F5]">
-          {image ? <Image src={image.url} alt={image.alt ?? categoryName} fill sizes="320px" className="object-cover" /> : <p className="absolute inset-0 grid place-items-center px-6 text-center body-sm text-on-surface-variant">No category image yet.</p>}
-        </div>
-        <div className="grid content-start gap-5">
-          <label><span className="label-caps">Image file</span><input key={inputKey} type="file" accept={CATEGORY_IMAGE_TYPES.join(",")} disabled={pending} className="mt-2 block w-full body-sm" onChange={(event) => { const selected = event.target.files?.[0]; if (selected && (!CATEGORY_IMAGE_TYPES.includes(selected.type as typeof CATEGORY_IMAGE_TYPES[number]) || selected.size > MAX_CATEGORY_IMAGE_BYTES)) { setMessage("Use JPEG, PNG, or WebP up to 8 MB."); event.target.value = ""; setFile(undefined); return; } setFile(selected); }} /></label>
-          <label><span className="label-caps">Alt text</span><span className="mt-1 block body-sm text-on-surface-variant">Briefly describe the image for customers using screen readers.</span><input value={alt} onChange={(event) => setAlt(event.target.value)} maxLength={300} className="mt-2 w-full border-b border-outline-variant bg-transparent py-2 body-sm outline-none focus:border-primary" /></label>
-          <div className="flex flex-wrap items-center gap-5"><Button type="button" onClick={attach} disabled={pending || !file}>{pending ? "Working…" : image ? "Replace image" : "Attach image"}</Button>{image ? <Button type="button" variant="text" onClick={remove} disabled={pending}>Remove image</Button> : null}</div>
-        </div>
+      <p className="body-sm mt-3 max-w-3xl text-on-surface-variant">Categories use one consistent square composition across storefront breakpoints.</p>
+      {image ? <div className="mt-6"><p className="mb-2 label-caps">Actual storefront composition · {resolveImageFitMode(image.presentation).toLowerCase()}</p><div className="relative aspect-square max-w-80 overflow-hidden border border-outline-variant bg-[#F7F7F5]"><Image src={resolveImageFitMode(image.presentation) === "COVER" ? applyCloudinaryCrop(image.url, image.width, image.height, image.presentation?.crop) : image.url} alt={image.alt ?? categoryName} fill sizes="320px" className={resolveImageFitMode(image.presentation) === "STRETCH" ? "object-fill" : "object-contain"} /></div></div> : null}
+      <div className="mt-6">
+        <AdminImageUploadField file={file} alt={alt} crop={crop} fitMode={fitMode} onFileChange={setFile} onAltChange={(value) => { setAlt(value); if (value.trim().length >= 3) setFieldError(""); }} onCropChange={setCrop} onFitModeChange={setFitMode} accept={CATEGORY_IMAGE_TYPES} maxBytes={MAX_CATEGORY_IMAGE_BYTES} aspect={1} frameLabel="square category" recommendedWidth={1200} recommendedHeight={1200} disabled={pending} error={fieldError} />
+        <div className="mt-4 flex flex-wrap justify-end gap-5"><Button type="button" onClick={attach} disabled={pending || !file}>{pending ? "Working…" : image ? "Upload replacement" : "Upload and attach image"}</Button>{image ? <Button type="button" variant="text" onClick={remove} disabled={pending}>Remove image</Button> : null}</div>
       </div>
       {message ? <p role="status" className="mt-4 body-sm text-on-surface-variant">{message}</p> : null}
     </section>

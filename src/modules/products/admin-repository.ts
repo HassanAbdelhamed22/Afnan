@@ -4,7 +4,10 @@ import { isValidObjectId, Types, type QueryFilter } from "mongoose";
 
 import { ConflictError, InvalidStateError, NotFoundError } from "@/lib/errors/app-error";
 import { connectMongoose } from "@/lib/mongoose";
+import { CartModel } from "@/modules/cart/model";
 import { CategoryModel } from "@/modules/categories/model";
+import { OrderModel } from "@/modules/orders/model";
+import { WishlistModel } from "@/modules/wishlist/model";
 
 import type { AdminProductDTO, AdminProductListItemDTO, PaginatedAdminProductsDTO } from "./admin-dto";
 import type { ProductAdminFilters, ProductAdminInput } from "./admin-schemas";
@@ -164,5 +167,31 @@ export async function setAdminProductStatus(productId: string, status: "DRAFT" |
   }
   product.status = status;
   await product.save();
+  return { id: product._id.toString(), slug: product.slug, categoryId: product.categoryId.toString() };
+}
+
+export async function deleteAdminProduct(productId: string) {
+  const mongoose = await connectMongoose();
+  const product = await ProductModel.findById(productId).select("slug categoryId status").lean();
+  if (!product) throw new NotFoundError("Product not found");
+  if (product.status === "ACTIVE") throw new InvalidStateError("Archive this product before removing it");
+
+  const isReferencedByOrder = await OrderModel.exists({ "items.productId": product._id });
+  if (isReferencedByOrder) throw new InvalidStateError("This product appears in an order and cannot be removed. Archive it instead");
+
+  const session = await mongoose.startSession();
+  try {
+    await session.withTransaction(async () => {
+      const deleted = await ProductModel.deleteOne({ _id: product._id, status: { $ne: "ACTIVE" } }).session(session);
+      if (deleted.deletedCount !== 1) throw new InvalidStateError("Product changed before it could be removed. Refresh and try again");
+      await Promise.all([
+        CartModel.updateMany({ "items.productId": product._id }, { $pull: { items: { productId: product._id } } }, { session }),
+        WishlistModel.updateMany({ "items.productId": product._id }, { $pull: { items: { productId: product._id } } }, { session }),
+      ]);
+    });
+  } finally {
+    await session.endSession();
+  }
+
   return { id: product._id.toString(), slug: product.slug, categoryId: product.categoryId.toString() };
 }

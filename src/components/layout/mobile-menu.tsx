@@ -98,6 +98,16 @@ export function MobileMenu() {
             <nav aria-label="Account navigation" className="grid gap-1">
               {user ? (
                 <>
+                  {user.role === "ADMIN" ? (
+                    <Link
+                      href="/admin"
+                      onClick={closeMenu}
+                      className="flex min-h-11 items-center justify-between border-b border-outline-variant px-3 font-sans text-sm font-bold text-on-background no-underline outline-none transition-colors hover:bg-surface-container-low focus-visible:bg-surface-container-low"
+                    >
+                      Back to admin
+                      <span aria-hidden="true" className="text-on-surface-variant">→</span>
+                    </Link>
+                  ) : null}
                   <Link
                     href="/account/profile"
                     onClick={closeMenu}

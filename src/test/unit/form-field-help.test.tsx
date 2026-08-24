@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { FormField } from "@/components/ui/form-field";
@@ -20,5 +20,10 @@ describe("FormField help", () => {
     expect(help).toHaveAttribute("type", "button");
     expect(help).toHaveAttribute("aria-describedby", tooltip.id);
     expect(tooltip).toHaveTextContent("Use a unique internal code.");
+    expect(help).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(help);
+    expect(help).toHaveAttribute("aria-expanded", "true");
+    fireEvent.keyDown(help, { key: "Escape" });
+    expect(help).toHaveAttribute("aria-expanded", "false");
   });
 });

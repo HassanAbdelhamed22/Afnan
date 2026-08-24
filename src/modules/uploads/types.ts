@@ -1,5 +1,7 @@
 import "server-only";
 
+import { applyCloudinaryCrop, resolveImageFitMode, type ImageCrop, type ImageFitMode } from "./presentation";
+
 export interface MediaAsset {
   url: string;
   publicId: string;
@@ -17,12 +19,17 @@ export interface MediaAsset {
     backgroundRemovalStatus: "NOT_REQUESTED" | "PROCESSING" | "READY" | "FAILED";
     enhancedApproved: boolean;
     backgroundColor: "#F7F7F5";
-    aspectRatio: "4:5";
+    aspectRatio: "4:5" | "1:1";
+    fitMode?: ImageFitMode;
+    crop?: ImageCrop;
   };
 }
 
 export function resolveMediaUrl(asset: MediaAsset): string {
-  return asset.presentation?.source === "ENHANCED" && asset.presentation.enhancedApproved && asset.presentation.backgroundRemovalStatus === "READY" && asset.enhancedUrl
+  const source = asset.presentation?.source === "ENHANCED" && asset.presentation.enhancedApproved && asset.presentation.backgroundRemovalStatus === "READY" && asset.enhancedUrl
     ? asset.enhancedUrl
     : asset.url;
+  return resolveImageFitMode(asset.presentation) === "COVER"
+    ? applyCloudinaryCrop(source, asset.width, asset.height, asset.presentation?.crop)
+    : source;
 }
