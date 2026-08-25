@@ -23,6 +23,10 @@ describe("FormField help", () => {
     expect(help).toHaveAttribute("aria-expanded", "false");
     fireEvent.click(help);
     expect(help).toHaveAttribute("aria-expanded", "true");
+    fireEvent.pointerDown(document.body);
+    expect(help).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(help);
+    expect(help).toHaveAttribute("aria-expanded", "true");
     fireEvent.keyDown(help, { key: "Escape" });
     expect(help).toHaveAttribute("aria-expanded", "false");
   });
