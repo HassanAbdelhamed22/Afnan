@@ -16,6 +16,16 @@ export function FormField({ className, label, htmlFor, hint, error, children, ..
   const errorId = htmlFor ? `${htmlFor}-error` : undefined;
   const hintId = React.useId();
   const [helpOpen, setHelpOpen] = React.useState(false);
+  const helpRef = React.useRef<HTMLSpanElement>(null);
+
+  React.useEffect(() => {
+    if (!helpOpen) return;
+    function closeOnOutsidePointer(event: PointerEvent) {
+      if (event.target instanceof Node && !helpRef.current?.contains(event.target)) setHelpOpen(false);
+    }
+    document.addEventListener("pointerdown", closeOnOutsidePointer);
+    return () => document.removeEventListener("pointerdown", closeOnOutsidePointer);
+  }, [helpOpen]);
 
   return (
     <div className={cn("flex w-full flex-col gap-1.5", className)} {...props}>
@@ -23,7 +33,7 @@ export function FormField({ className, label, htmlFor, hint, error, children, ..
         <div className="flex items-center gap-2">
           <label htmlFor={htmlFor} className={cn("font-sans text-[0.6875rem] font-semibold uppercase leading-none tracking-[0.12em]", error ? "text-error" : "text-on-background/65")}>{label}</label>
           {hint ? (
-            <span className="group relative inline-flex">
+            <span ref={helpRef} className="group relative inline-flex">
               <button
                 type="button"
                 aria-label={`Help for ${label}`}
